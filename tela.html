@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Executivo & Plano Estratégico - PAD Saúde</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-global: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --primary-color: #6366f1;    
+            --secondary-color: #10b981;  
+            --red-color: #ef4444;        
+            --black-color: #0f172a;      
+            
+            --dark-card-1: #1e1b4b;
+            --dark-card-2: #064e3b;
+            --dark-card-3: #111827;
+            --border-radius: 16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-global); color: var(--text-primary); padding: 24px; }
+
+        /* MENU DE ABAS SUPERIOR */
+        .tabs-navigation {
+            display: flex;
+            gap: 28px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 24px;
+            padding-bottom: 4px;
+            max-width: 1650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            padding: 10px 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            transition: color 0.2s;
+        }
+        .tab-btn:hover { color: var(--text-primary); }
+        .tab-btn.active {
+            font-weight: 700;
+            color: #0d9488;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #0d9488;
+            border-radius: 2px;
+        }
+
+        /* EXIBIÇÃO DAS TELAS */
+        .view-content { display: none; }
+        .view-content.active { display: block; }
+
+        /* CONTAINER DO SIMULADOR */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
+            max-width: 1650px;
+            margin: 0 auto;
+        }
+
+        /* PAINEL DE PARÂMETROS LATERAL */
+        .sidebar-params {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .panel-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
+        .panel-description { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 5px; }
+
+        .date-filter-box {
+            background-color: #f8fafc; padding: 14px; border-radius: 8px;
+            border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 12px;
+        }
+        .date-row { display: grid; grid-template-columns: 60px 1fr; align-items: center; gap: 10px; }
+        .date-label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); }
+
+        /* BOXES DE PARAMETROS EXPLICADOS */
+        .parameter-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; font-weight: 700; color: #1e293b; }
+        .value-display { font-weight: 700; font-size: 0.9rem; }
+        .value-display.green { color: var(--secondary-color); }
+        .value-display.indigo { color: var(--primary-color); }
+        
+        .input-explanation-card {
+            font-size: 0.8rem;
+            color: #475569;
+            line-height: 1.4;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 3px solid #cbd5e1;
+        }
+        .input-explanation-card strong { color: #0f172a; }
+
+        .input-digit-mkt {
+            width: 95px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px;
+            font-size: 0.85rem; font-weight: 700; color: var(--primary-color); text-align: right; outline: none;
+        }
+
+        input[type="range"] { width: 100%; accent-color: var(--primary-color); cursor: pointer; height: 6px; background: #e2e8f0; border-radius: 3px; }
+        input[type="range"].green-slider { accent-color: var(--secondary-color); }
+
+        .inline-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        input[type="number"], input[type="month"], select {
+            width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1;
+            border-radius: 6px; background-color: #ffffff; font-size: 0.88rem; font-weight: 600; outline: none;
+        }
+
+        .info-box { background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 14px; border-radius: 8px; font-size: 0.82rem; color: #1e40af; line-height: 1.5; }
+
+        /* CONTEÚDO PRINCIPAL */
+        .main-content { display: flex; flex-direction: column; gap: 24px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .kpi-card { padding: 22px; border-radius: var(--border-radius); color: #ffffff; display: flex; flex-direction: column; justify-content: space-between; min-height: 150px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .kpi-card.card-1 { background-color: var(--dark-card-1); }
+        .kpi-card.card-2 { background-color: var(--dark-card-2); }
+        .kpi-card.card-3 { background-color: var(--dark-card-3); }
+        
+        .kpi-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: 600; opacity: 0.9; letter-spacing: 0.5px; }
+        .kpi-badge { padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+        .card-1 .kpi-badge { background-color: #4338ca; }
+        .card-2 .kpi-badge { background-color: #047857; color: #a7f3d0; }
+        .card-3 .kpi-badge { background-color: #c2410c; }
+        
+        .kpi-value { font-size: 2.3rem; font-weight: 700; margin: 8px 0; letter-spacing: -1px; }
+        .card-2 .kpi-value, .card-3 .kpi-value { color: #10b981; }
+        .kpi-footer { font-size: 0.78rem; opacity: 0.85; color: #cbd5e1; line-height: 1.3; }
+
+        .charts-layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .chart-section { background: var(--bg-card); padding: 24px; border-radius: var(--border-radius); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .chart-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; color: #0f172a; }
+        .chart-desc { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 10px; }
+        .chart-legend { display: flex; gap: 14px; font-size: 0.78rem; justify-content: flex-end; margin-bottom: 15px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+        .legend-line { width: 20px; height: 0px; }
+
+        .bar-chart-mock { display: flex; align-items: flex-end; justify-content: space-around; height: 210px; border-bottom: 1px solid #e2e8f0; }
+        .bar-container { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; flex-grow: 1; max-width: 45px; height: 100%; }
+        .bar-segment { width: 75%; transition: height 0.4s ease; }
+        .segment-consult { background-color: var(--primary-color); border-radius: 3px 3px 0 0; }
+        .segment-recurrence { background-color: var(--secondary-color); border-radius: 3px 3px 0 0; margin-bottom: -2px; z-index: 2; }
+        .axis-label-x { font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; }
+
+        .line-chart-container { position: relative; width: 100%; height: 210px; }
+        .svg-chart { width: 100%; height: 100%; overflow: visible; }
+        .grid-line { stroke: #f1f5f9; stroke-width: 1; }
+        .path-line { fill: none; stroke-width: 3; transition: d 0.4s ease; }
+        .labels-x-wrapper { display: flex; justify-content: space-between; margin-top: 8px; }
+
+        /* PLANO ESTRATÉGICO MATRICIAL */
+        .matrix-card { background: var(--bg-card); padding: 32px; border-radius: var(--border-radius); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); max-width: 1650px; margin: 0 auto; }
+        .matrix-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 24px; }
+        .matrix-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+        .matrix-desc { font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px; }
+        
+        .progress-container { display: flex; align-items: center; gap: 12px; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 20px; background: #f8fafc; }
+        .progress-label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); }
+        .progress-bar-bg { width: 100px; height: 6px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { width: 0%; height: 100%; background: #10b981; transition: width 0.3s ease; }
+        .progress-percentage { font-size: 0.85rem; font-weight: 700; color: #0f172a; min-width: 35px; text-align: right; }
+
+        .matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+        .matrix-column { display: flex; flex-direction: column; gap: 24px; }
+        
+        .executive-summary-box { grid-column: 1 / -1; background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 20px; border-radius: 12px; margin-bottom: 12px; font-size: 0.9rem; line-height: 1.5; color: var(--text-secondary); }
+
+        .phase-section { display: flex; flex-direction: column; gap: 12px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .phase-title { font-size: 0.95rem; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; padding-left: 8px; margin-bottom: 4px; }
+        .phase-concept { font-size: 0.82rem; color: var(--text-secondary); padding-left: 8px; margin-bottom: 8px; font-style: italic; }
+        .phase-1 { border-left: 4px solid #6366f1; color: #6366f1; }
+        .phase-2 { border-left: 4px solid #3b82f6; color: #3b82f6; }
+        .phase-3 { border-left: 4px solid #10b981; color: #10b981; }
+        .phase-4 { border-left: 4px solid #f59e0b; color: #f59e0b; }
+
+        .task-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+        .task-card:hover { background: #f8fafc; border-color: #cbd5e1; }
+        .task-card input[type="checkbox"] { width: 18px; height: 18px; accent-color: #10b981; cursor: pointer; margin-top: 2px; flex-shrink: 0; }
+        .task-text { font-size: 0.88rem; color: #334155; line-height: 1.4; font-weight: 500; }
+        .task-card.checked .task-text { color: var(--text-muted); text-decoration: line-through; }
+    </style>
+</head>
+<body>
+
+    <nav class="tabs-navigation">
+        <button class="tab-btn active" onclick="alternarAba('aba-simulador', this)">📊 1. Simulador de Fluxo & Vendas</button>
+        <button class="tab-btn" onclick="alternarAba('aba-estrategia', this)">📋 2. Plano Estratégico Geral</button>
+    </nav>
+
+    <div id="aba-simulador" class="view-content active">
+        <div class="dashboard-container">
+            <aside class="sidebar-params">
+                <div>
+                    <div class="panel-title">🧮 Painel de Parâmetros</div>
+                    <div class="panel-description">Regule as variáveis abaixo para simular o comportamento financeiro e de fluxo do ecossistema.</div>
+                </div>
+
+                <div class="input-group">
+                    <span class="date-label">Filtro de Período</span>
+                    <div class="date-filter-box">
+                        <div class="date-row">
+                            <label class="date-label" for="date-init">Início:</label>
+                            <input type="month" id="date-init" value="2026-02">
+                        </div>
+                        <div class="date-row">
+                            <label class="date-label" for="date-end">Fim:</label>
+                            <input type="month" id="date-end" value="2026-12">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="parameter-box">
+                    <div class="input-group">
+                        <div class="input-header">
+                            <span>Orçamento de Marketing</span>
+                            <div>
+                                <span style="font-size:0.85rem; font-weight:700; color:var(--primary-color)">R$ </span>
+                                <input type="number" id="in-marketing-digit" class="input-digit-mkt" min="0" max="10000" step="100" value="500">
+                            </div>
+                        </div>
+                        <input type="range" id="in-marketing" min="0" max="10000" step="100" value="500">
+                    </div>
+                    <div class="input-explanation-card">
+                        <strong>Impacto no Fluxo:</strong> Investimento mensal em anúncios (Google/Instagram). Cada R$ 10 injetados trazem 1 novo paciente particular para dentro da clínica.
+                    </div>
+                </div>
+
+                <div class="parameter-box">
+                    <div class="input-group">
+                        <div class="input-header">
+                            <span>Conversão no Balcão</span>
+                            <span class="value-display green" id="lbl-conversao">35%</span>
+                        </div>
+                        <input type="range" id="in-conversao" class="green-slider" min="0" max="100" step="5" value="35">
+                    </div>
+                    <div class="input-explanation-card">
+                        <strong>Impacto em Vendas:</strong> Eficiência da recepcionista. Dos pacientes particulares que vão à clínica, quantos ela convence a assinar o Cartão de R$ 29/mês antes de irem embora.
+                    </div>
+                </div>
+
+                <div class="parameter-box">
+                    <div class="input-group">
+                        <span class="input-header">Fluxo Particular Base</span>
+                        <input type="number" id="in-fluxo-base" value="350">
+                    </div>
+                    <div class="input-explanation-card">
+                        <strong>Volume Inicial:</strong> Número de consultas particulares que já acontecem na clínica de forma 100% orgânica (vizinhos, passantes, indicações antigas), sem gastar nada em anúncios.
+                    </div>
+                </div>
+
+                <div class="parameter-box">
+                    <span class="input-header">Tickets de Consulta (R$)</span>
+                    <div class="inline-inputs">
+                        <div class="input-group">
+                            <label class="date-label">Particular</label>
+                            <input type="number" id="in-ticket-particular" value="160">
+                        </div>
+                        <div class="input-group">
+                            <label class="date-label">Membro</label>
+                            <input type="number" id="in-ticket-membro" value="70">
+                        </div>
+                    </div>
+                    <div class="input-explanation-card">
+                        <strong>Ticket Particular:</strong> Preço cheio pago pelo paciente avulso (R$ 160).<br>
+                        <strong>Ticket Membro:</strong> Preço com desconto pago por quem tem o cartão (R$ 70).
+                    </div>
+                </div>
+
+                <div class="parameter-box">
+                    <div class="input-group">
+                        <div class="input-header">
+                            <span>Mensalidade do Cartão</span>
+                            <span class="value-display green" id="lbl-mensalidade">R$ 29 /mês</span>
+                        </div>
+                        <input type="range" id="in-mensalidade" class="green-slider" min="10" max="150" step="1" value="29">
+                    </div>
+                </div>
+
+                <div class="parameter-box">
+                    <div class="input-group">
+                        <span class="input-header">Fator de Indicação Organica</span>
+                        <select id="in-indicacao">
+                            <option value="0.04" selected>4% ao mês (Indicações padrão)</option>
+                            <option value="0.08">8% ao mês (Campanha agressiva MGM)</option>
+                        </select>
+                    </div>
+                    <div class="input-explanation-card">
+                        <strong>Crescimento Viral:</strong> Porcentagem da base de membros ativos que indica um novo assinante todo mês de forma gratuita.
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    💡 <strong>Dica de Apresentação:</strong> Mostre à diretoria que ao aumentar a <em>Conversão de Balcão</em> para 50%, a receita recorrente explode mesmo mantendo o mesmo gasto em anúncios.
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <div class="kpi-grid">
+                    <div class="kpi-card card-1">
+                        <div class="kpi-header">
+                            <span>CARTEIRA DE CLIENTES</span>
+                            <span class="kpi-badge">Fim do Período</span>
+                        </div>
+                        <div class="kpi-value" id="kpi-membros">0</div>
+                        <div class="kpi-footer">Membros ativos pagando mensalidade no último mês selecionado.</div>
+                    </div>
+
+                    <div class="kpi-card card-2">
+                        <div class="kpi-header">
+                            <span>FATURAMENTO MENSAL FINAL</span>
+                            <span class="kpi-badge">Recorrência + Consultas</span>
+                        </div>
+                        <div class="kpi-value" id="kpi-faturamento">R$ 0</div>
+                        <div class="kpi-footer">Faturamento total bruto estimado para o último mês do filtro.</div>
+                    </div>
+
+                    <div class="kpi-card card-3">
+                        <div class="kpi-header">
+                            <span>MENSALIDADES ACUMULADAS</span>
+                            <span class="kpi-badge">Total do Período</span>
+                        </div>
+                        <div class="kpi-value" id="kpi-recorrencia">R$ 0</div>
+                        <div class="kpi-footer">Soma de todas as mensalidades do cartão recebidas durante o período.</div>
+                    </div>
+                </div>
+
+                <div class="charts-layout-grid">
+                    <section class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">Série Histórica e Projeção Financeira</div>
+                            <div class="chart-desc">Comparativo de Faturamento: Mensalidades Recorrentes do Cartão vs. Ganhos de Consulta Médica.</div>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="legend-item"><div class="legend-color" style="background-color: var(--primary-color);"></div>Faturamento Consultas</div>
+                            <div class="legend-item"><div class="legend-color" style="background-color: var(--secondary-color);"></div>Faturamento Assinaturas</div>
+                        </div>
+                        <div class="bar-chart-mock" id="bar-chart-container"></div>
+                    </section>
+
+                    <section class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">Curva de Fluxo de Clientes (Consultas/Mês)</div>
+                            <div class="chart-desc">Visualização da agenda física preenchida de forma híbrida estável e recorrente.</div>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="legend-item"><div class="legend-line" style="border-top: 3px dashed var(--black-color)"></div>Fluxo Total Agenda</div>
+                            <div class="legend-item"><div class="legend-line" style="background-color: var(--red-color)"></div>Pacientes Particulares</div>
+                            <div class="legend-item"><div class="legend-line" style="background-color: var(--secondary-color)"></div>Consultas de Membros</div>
+                        </div>
+                        <div class="line-chart-container">
+                            <svg class="svg-chart" id="line-svg" viewBox="0 0 1000 200" preserveAspectRatio="none">
+                                <line x1="0" y1="200" x2="1000" y2="200" class="grid-line" />
+                                <line x1="0" y1="150" x2="1000" y2="150" class="grid-line" />
+                                <line x1="0" y1="100" x2="1000" y2="100" class="grid-line" />
+                                <line x1="0" y1="50" x2="1000" y2="50" class="grid-line" />
+                                <line x1="0" y1="0" x2="1000" y2="0" class="grid-line" />
+
+                                <path id="path-particular" class="path-line" stroke="var(--red-color)" />
+                                <path id="path-membros" class="path-line" stroke="var(--secondary-color)" />
+                                <path id="path-total" class="path-line" stroke="var(--black-color)" stroke-dasharray="6,4" />
+                            </svg>
+                            <div class="labels-x-wrapper" id="labels-x-container"></div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="aba-estrategia" class="view-content">
+        <div class="matrix-card">
+            <div class="matrix-header">
+                <div>
+                    <div class="matrix-title">🎯 Plano Diretor de Marketing & Alavancagem Comercial</div>
+                    <div class="matrix-desc">Abordagem de engenharia comercial para maximizar a tração da clínica e escalabilidade do Cartão PAD Saúde.</div>
+                </div>
+                <div class="progress-container">
+                    <span class="progress-label">Progresso</span>
+                    <div class="progress-bar-bg">
+                        <div id="progress-fill" class="progress-bar-fill"></div>
+                    </div>
+                    <span id="progress-txt" class="progress-percentage">0%</span>
+                </div>
+            </div>
+
+            <div class="matrix-grid">
+                <div class="executive-summary-box">
+                    <strong>Diretriz Executiva:</strong> O modelo baseia-se na aceleração de duas engrenagens financeiras complementares. O <em>Pilar de Atração</em> utiliza o orçamento de marketing digital para encher a agenda física com consultas de ticket cheio (R$ 160). O <em>Pilar de Conversão</em> intercepta esse fluxo na recepção transformando transações avulsas em receitas recorrentes previsíveis (R$ 29/mês), mantendo uma taxa saudável de ocupação híbrida de 22% de uso contínuo dos membros.
+                </div>
+
+                <div class="matrix-column">
+                    <div class="phase-section">
+                        <div class="phase-title phase-1">Fase 1: Preparação, Treinamento & Ativos Físicos</div>
+                        <div class="phase-concept">Foco: Alavancar a conversão de balcão interna e otimizar tráfego orgânico sem custos de mídia.</div>
+                        
+                        <label class="task-card">
+                            <input type="checkbox" class="task-check" onchange="atualizarProgresso(this)">
+                            <span class="task-text"><strong>SEO Local Extremo:</strong> Cadastrar, atualizar e otimizar diariamente o Google Meu Negócio da Clínica com foco em termos de urgência ("ginecologista hoje", "clínica médica perto de mim").</span>
+                        </label>
+                        <label class="task-card">
+                            <input type="checkbox" class="task-check" onchange="atualizarProgresso(this)">
+                            <span class="task-text"><strong>Engenharia de Script de Vendas:</strong> Treinar exaustivamente os recepcionistas para aplicar o script ativo de ancoragem comparativa de valores na saída da consulta particular.</span>
+                        </label>
+                        <label class="task-card">
+                            <input type="checkbox" class="task-check" onchange="atualizarProgresso(this)">
+                            <span class="task-text"><strong>Ancoragem Visual de Balcão:</strong> Posicionar banners e displays físicos comparativos (Consulta Particular de R$ 160 vs Benefício de Associado de R$ 70) na recepção e salas de espera.</span>
+                        </label>
+                    </div>
+
+                    <div class="phase-section">
+                        <div class="phase-title phase-2">Fase 2: Atração Digital, Aquisição & Ofertas Gancho</div>
+                        <div class="phase-concept">Foco: Gerar volume qualificado de pacientes particulares utilizando o orçamento de mídia paga.</div>
+                        
+                        <label class="task-card">
+                            <input type="checkbox" class="task-check" onchange="atualizarProgresso(this)">
+                            <span class="task-text"><strong>Tráfego Hiperlocal (Meta Ads):</strong> Lançar campanhas geolocalizadas focadas no Instagram/Facebook num raio estrito de 5km de distância da unidade clínica.</span>
+                        </label>
+                        <label class="task-card">
+                            <input type="checkbox" class="task-check" onchange="atualizarProgresso(this)">
+                            <span class="task-text"><strong>Combos Casados Promocionais:</strong> Estruturar ofertas de entrada atraentes (ex: Combo Casado de Ginecologia + Exame Preventivo) para reduzir o custo de aquisição inicial (CAC).</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="matrix-column">
+                    <div class="phase-section">
+                        <div class="phase-title phase-3">Fase 3: Ecossistema de Benefícios de Vizinhança (B2B)</div>
+                        <div class="phase-concept">Foco: Elevar o valor percebido do Cartão de R$ 29/mês para garantir a retenção de receita previsível.</div>
+                        
+                        <label class="task-card">
+                            <input type="checkbox" class="task-check" onchange="atualizarProgresso(this)">
+                            <span class="task-text"><strong>Rede Credenciada de Proximidade:</strong> Firmar parcerias de desconto em medicamentos com farmácias independentes e drogarias locais do bairro.</span>
+                        </label>
+                        <label class="task-card">
+                            <input type="checkbox" class="task-check" onchange="atualizarProgresso(this)">
+                            <span class="task-text"><strong>Integração de Caixa Recorrente:</strong> Configurar e homologar os gateways de cobrança recorrente automatizada para minimizar a inadimplência nas assinaturas.</span>
+                        </label>
+                    </div>
+
+                    <div class="phase-section">
+                        <div class="phase-title phase-4">Fase 4: Indicações Virais & Escala Comercial (MGM)</div>
+                        <div class="phase-concept">Foco: Forçar a transição contínua da taxa de indicação de 4% para a métrica agressiva de 8%.</div>
+                        
+                        <label class="task-card">
+                            <input type="checkbox" class="task-check" onchange="atualizarProgresso(this)">
+                            <span class="task-text"><strong>Mecânica Viral Member-Get-Member:</strong> Oficializar o programa contínuo 'Indique e Ganhe', bonificando o assinante atual com a isenção de mensalidades a cada nova conversão validada.</span>
+                        </label>
+                        <label class="task-card">
+                            <input type="checkbox" class="task-check" onchange="atualizarProgresso(this)">
+                            <span class="task-text"><strong>Régua de Relacionamento (WhatsApp):</strong> Automatizar mensagens de pós-consulta pelo robô de atendimento, solicitando avaliações de qualidade e fornecendo o link de convite personalizado.</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    function alternarAba(idAba, botaoAlvo) {
+        document.querySelectorAll('.view-content').forEach(tela => tela.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(idAba).classList.add('active');
+        botaoAlvo.classList.add('active');
+    }
+
+    function atualizarProgresso(checkbox) {
+        const card = checkbox.closest('.task-card');
+        if (checkbox.checked) {
+            card.classList.add('checked');
+        } else {
+            card.classList.remove('checked');
+        }
+
+        const totalChecks = document.querySelectorAll('.task-check').length;
+        const marcados = document.querySelectorAll('.task-check:checked').length;
+        const percentual = totalChecks > 0 ? Math.round((marcados / totalChecks) * 100) : 0;
+
+        document.getElementById('progress-fill').style.width = percentual + '%';
+        document.getElementById('progress-txt').textContent = percentual + '%';
+    }
+
+    const inputs = ['in-marketing', 'in-mensalidade', 'in-conversao', 'in-ticket-particular', 'in-ticket-membro', 'in-fluxo-base', 'in-indicacao', 'date-init', 'date-end'];
+    const nomeMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+    const sliderMkt = document.getElementById('in-marketing');
+    const digitMkt = document.getElementById('in-marketing-digit');
+
+    sliderMkt.addEventListener('input', () => {
+        digitMkt.value = sliderMkt.value;
+        renderizarDashboard();
+    });
+
+    digitMkt.addEventListener('input', () => {
+        if(digitMkt.value === '') return; 
+        sliderMkt.value = digitMkt.value;
+        renderizarDashboard();
+    });
+
+    function formatBRL(val) {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
+    }
+
+    function renderizarDashboard() {
+        const mkt = parseFloat(digitMkt.value) || 0;
+        const mensalidade = parseFloat(document.getElementById('in-mensalidade').value);
+        const conversao = parseFloat(document.getElementById('in-conversao').value) / 100;
+        const tktParticular = parseFloat(document.getElementById('in-ticket-particular').value) || 0;
+        const tktMembro = parseFloat(document.getElementById('in-ticket-membro').value) || 0;
+        const fluxoBase = parseFloat(document.getElementById('in-fluxo-base').value) || 0;
+        const taxaIndicacao = parseFloat(document.getElementById('in-indicacao').value);
+
+        const dateInitVal = document.getElementById('date-init').value;
+        const dateEndVal = document.getElementById('date-end').value;
+
+        let mesInicioIdx = parseInt(dateInitVal.split('-')[1]) - 1;
+        let mesFimIdx = parseInt(dateEndVal.split('-')[1]) - 1;
+
+        if (mesFimIdx < mesInicioIdx) {
+            mesFimIdx = mesInicioIdx;
+            document.getElementById('date-end').value = dateInitVal;
+        }
+
+        lblMensalidade.textContent = `R$ ${mensalidade} /mês`;
+        lblConversao.textContent = `${document.getElementById('in-conversao').value}%`;
+
+        let membrosAtivos = 150; 
+        let totalAcumuladoRecorrencia = 0;
+        let faturamentoMesFinal = 0;
+        let membrosMesFinal = 0;
+        
+        let htmlBarras = '';
+        let pontosParticular = [];
+        let pontosMembros = [];
+        let pontosTotal = [];
+
+        let mesesFiltrados = [];
+        for (let m = mesInicioIdx; m <= mesFimIdx; m++) {
+            mesesFiltrados.push(nomeMeses[m]);
+        }
+        const totalMesesFiltrados = mesesFiltrados.length;
+
+        nomeMeses.forEach((mes, idx) => {
+            const novosPacientesMkt = mkt / 10;
+            const fluxoTotalPacientes = fluxoBase + novosPacientesMkt;
+            
+            const novasAssinaturas = fluxoTotalPacientes * conversao;
+            const indicacoes = membrosAtivos * taxaIndicacao;
+            membrosAtivos += (novasAssinaturas + indicacoes);
+            
+            const receitaRecorrenteMês = membrosAtivos * mensalidade;
+            const receitaConsultas = (fluxoTotalPacientes * 0.7 * tktParticular) + (membrosAtivos * 0.22 * tktMembro);
+
+            if (idx >= mesInicioIdx && idx <= mesFimIdx) {
+                totalAcumuladoRecorrencia += receitaRecorrenteMês;
+                
+                if (idx === mesFimIdx) {
+                    faturamentoMesFinal = receitaRecorrenteMês + receitaConsultas;
+                    membrosMesFinal = membrosAtivos;
+                }
+
+                const maxFaturamentoVisivel = 250000;
+                const hRecorrencia = Math.min((receitaRecorrenteMês / maxFaturamentoVisivel) * 100, 55);
+                const hConsulta = Math.min((receitaConsultas / maxFaturamentoVisivel) * 100, 55);
+
+                htmlBarras += `
+                    <div class="bar-container">
+                        <div class="bar-segment segment-recurrence" style="height: ${hRecorrencia}%"></div>
+                        <div class="bar-segment segment-consult" style="height: ${hConsulta}%"></div>
+                        <div class="axis-label-x">${mes}</div>
+                    </div>
+                `;
+
+                const posicaoFiltroIdx = idx - mesInicioIdx;
+                const x = totalMesesFiltrados > 1 ? (posicaoFiltroIdx / (totalMesesFiltrados - 1)) * 1000 : 500;
+                const escalaY = 200 / 1500;
+
+                const totalMembrosAtendidos = membrosAtivos * 0.22;
+                const yPart = 200 - (fluxoTotalPacientes * escalaY);
+                const yMemb = 200 - (totalMembrosAtendidos * escalaY);
+                const yTotal = 200 - ((fluxoTotalPacientes + totalMembrosAtendidos) * escalaY);
+
+                pontosParticular.push(`${x},${yPart}`);
+                pontosMembros.push(`${x},${yMemb}`);
+                pontosTotal.push(`${x},${yTotal}`);
+            }
+        });
+
+        document.getElementById('kpi-membros').textContent = Math.round(membrosMesFinal).toLocaleString('pt-BR');
+        document.getElementById('kpi-faturamento').textContent = formatBRL(faturamentoMesFinal);
+        document.getElementById('kpi-recorrencia').textContent = formatBRL(totalAcumuladoRecorrencia);
+
+        document.getElementById('bar-chart-container').innerHTML = htmlBarras;
+        document.getElementById('labels-x-container').innerHTML = mesesFiltrados.map(m => `<span class="axis-label-x" style="width:35px;">${m}</span>`).join('');
+
+        if (pontosParticular.length > 0) {
+            document.getElementById('path-particular').setAttribute('d', `M ${pontosParticular.join(' L ')}`);
+            document.getElementById('path-membros').setAttribute('d', `M ${pontosMembros.join(' L ')}`);
+            document.getElementById('path-total').setAttribute('d', `M ${pontosTotal.join(' L ')}`);
+        }
+    }
+
+    const lblMensalidade = document.getElementById('lbl-mensalidade');
+    const lblConversao = document.getElementById('lbl-conversao');
+
+    inputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', renderizarDashboard);
+    });
+
+    renderizarDashboard();
+</script>
+</body>
+</html>

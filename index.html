@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>PAD Saúde · Assistente WhatsApp com Cupom</title>
+    <title>PAD Saúde · Assistente WhatsApp</title>
     <!-- Google Fonts + Font Awesome 6 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -13,53 +13,113 @@
             font-family: 'Inter', sans-serif;
             background: linear-gradient(145deg, #eef2f9 0%, #e2e8f0 100%);
             color: #0b2b2f;
-            padding: 2rem 1rem;
+            padding: 1rem;
         }
         .container { max-width: 900px; margin: 0 auto; }
         .hero {
             background: radial-gradient(ellipse at 20% 30%, #0f2c31, #063b3a);
-            border-radius: 2rem;
-            padding: 2rem;
-            margin-bottom: 2rem;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
             text-align: center;
             box-shadow: 0 20px 35px -12px rgba(0,0,0,0.25);
         }
-        .hero h1 { font-size: 2.3rem; font-weight: 800; background: linear-gradient(125deg, #FFF, #B2F0EA, #7FDDD5); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .hero p { color: #CAF0EC; margin-top: 0.5rem; }
-        .badge-dual { display: inline-flex; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 0.5rem 1.2rem; border-radius: 40px; font-size: 0.75rem; margin-top: 1rem; gap: 1rem; color: #e0f3f0; }
+        .hero h1 { font-size: 1.8rem; font-weight: 800; background: linear-gradient(125deg, #FFF, #B2F0EA, #7FDDD5); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 0.2rem; }
+        .hero p { color: #CAF0EC; margin-top: 0.2rem; font-size: 0.8rem; }
+        .badge-dual { display: inline-flex; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; margin-top: 0.6rem; gap: 0.6rem; color: #e0f3f0; }
         
-        .card { background: rgba(255,255,255,0.98); border-radius: 2rem; overflow: hidden; box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.6); }
-        .card-header { display: flex; align-items: center; gap: 12px; padding: 1.5rem 1.5rem 0.5rem 1.5rem; border-bottom: 2px solid #eef3f8; }
-        .card-header i { font-size: 1.7rem; color: #146b65; background: #e0f3f1; padding: 10px; border-radius: 1.2rem; }
-        .card-header h3 { font-weight: 700; }
-        .date-hint { background: #eef3fa; border-radius: 1rem; padding: 8px 14px; margin: 0 1rem 1rem 1rem; font-size: 0.7rem; color: #146b65; display: flex; align-items: center; gap: 8px; }
+        .card { background: rgba(255,255,255,0.98); border-radius: 1.5rem; overflow: hidden; box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.6); }
+        .card-header { display: flex; align-items: center; gap: 8px; padding: 0.8rem 1rem 0.3rem 1rem; border-bottom: 2px solid #eef3f8; }
+        .card-header i { font-size: 1.3rem; color: #146b65; background: #e0f3f1; padding: 6px; border-radius: 0.8rem; }
+        .card-header h3 { font-weight: 700; font-size: 1rem; }
+        .date-hint { background: #eef3fa; border-radius: 0.8rem; padding: 4px 10px; margin: 0.4rem 1rem 0.6rem 1rem; font-size: 0.6rem; color: #146b65; display: flex; align-items: center; gap: 5px; }
         
-        .whatsapp-simulator { background: #f5f9fe; border-radius: 1.5rem; overflow: hidden; margin: 0 1rem 1rem 1rem; border: 1px solid #e2edf2; }
-        .chat-header { background: linear-gradient(98deg, #075e54, #0a6b60); color: white; padding: 0.8rem 1.2rem; display: flex; align-items: center; gap: 10px; }
-        .chat-messages { height: 500px; overflow-y: auto; padding: 1rem; background: #eef2f5; display: flex; flex-direction: column; gap: 6px; }
-        .message-bubble { max-width: 85%; padding: 8px 14px; border-radius: 1.2rem; font-size: 0.8rem; font-weight: 500; word-break: break-word; }
-        .message-bot .message-bubble { background: white; border-radius: 1.2rem 1.2rem 1.2rem 0.2rem; }
-        .message-user .message-bubble { background: #dcf8c5; border-radius: 1.2rem 1.2rem 0.2rem 1.2rem; }
+        .whatsapp-simulator { background: #f5f9fe; border-radius: 1rem; overflow: hidden; margin: 0 1rem 0.5rem 1rem; border: 1px solid #e2edf2; }
+        .chat-header { background: linear-gradient(98deg, #075e54, #0a6b60); color: white; padding: 0.5rem 0.8rem; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+        .chat-header i { font-size: 1.1rem; }
+        .chat-messages { 
+            height: 400px; 
+            overflow-y: auto; 
+            padding: 0.6rem; 
+            background: #eef2f5; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 4px; 
+        }
+        .message-bubble { 
+            max-width: 85%; 
+            padding: 5px 10px; 
+            border-radius: 1rem; 
+            font-size: 0.73rem; 
+            font-weight: 500; 
+            word-break: break-word; 
+            line-height: 1.35;
+        }
+        .message-bot .message-bubble { background: white; border-radius: 1rem 1rem 1rem 0.2rem; }
+        .message-user .message-bubble { background: #dcf8c5; border-radius: 1rem 1rem 0.2rem 1rem; }
         .message-bot .message-bubble a { color: #146b65; font-weight: 600; text-decoration: none; border-bottom: 1px dashed #146b65; }
         .message-bot .message-bubble a:hover { text-decoration: underline; }
-        .input-area { display: flex; gap: 10px; padding: 12px; background: white; border-top: 1px solid #e0eaf0; }
-        .input-area input { flex: 1; border-radius: 2rem; border: 1px solid #ccdbe5; padding: 10px 15px; font-family: 'Inter'; }
-        .btn-primary { background: linear-gradient(100deg, #146b65, #0e5954); color: white; border: none; padding: 0 1.5rem; border-radius: 2rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .btn-secondary { background: white; border: 1.5px solid #146b65; color: #146b65; padding: 0.5rem 1.2rem; border-radius: 2rem; font-weight: 600; cursor: pointer; }
         
-        .footer { margin-top: 2rem; text-align: center; font-size: 0.75rem; color: #5f8a86; padding: 1rem; border-top: 1px solid rgba(27,94,87,0.15); }
-        @media (max-width: 700px) { .chat-messages { height: 440px; } }
+        /* Input area sem espaços extras */
+        .input-area { 
+            display: flex; 
+            gap: 6px; 
+            padding: 8px 10px; 
+            background: white; 
+            border-top: 1px solid #e0eaf0; 
+        }
+        .input-area input { 
+            flex: 1; 
+            border-radius: 1.8rem; 
+            border: 1px solid #ccdbe5; 
+            padding: 8px 12px; 
+            font-family: 'Inter'; 
+            font-size: 0.75rem;
+            outline: none;
+        }
+        .input-area input:focus { border-color: #1b7e79; box-shadow: 0 0 0 2px rgba(27,126,121,0.1); }
+        .btn-primary { 
+            background: linear-gradient(100deg, #146b65, #0e5954); 
+            color: white; 
+            border: none; 
+            padding: 0 1rem; 
+            border-radius: 1.8rem; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            font-size: 0.75rem;
+        }
+        .btn-primary:hover { transform: scale(0.97); }
+        .btn-secondary { 
+            background: white; 
+            border: 1.5px solid #146b65; 
+            color: #146b65; 
+            padding: 5px 12px; 
+            border-radius: 1.8rem; 
+            font-weight: 600; 
+            cursor: pointer; 
+            font-size: 0.7rem;
+        }
         
-        .id-badge-chat { background: #eef3fa; padding: 2px 8px; border-radius: 20px; font-family: monospace; font-size: 0.7rem; font-weight: 600; color: #0e5954; display: inline-block; }
-        .info-box { background: #e8f4f1; border-left: 3px solid #1b7e79; padding: 8px 12px; margin: 10px 0; border-radius: 12px; font-size: 0.75rem; }
+        .reset-btn-container { display: flex; justify-content: center; gap: 8px; margin: 0.5rem 1rem 0.8rem 1rem; }
+        .footer { margin-top: 1rem; text-align: center; font-size: 0.65rem; color: #5f8a86; padding: 0.6rem; border-top: 1px solid rgba(27,94,87,0.15); }
+        
+        @media (max-width: 700px) { 
+            .chat-messages { height: 360px; } 
+            .hero { padding: 1rem; }
+            .hero h1 { font-size: 1.5rem; }
+        }
+        
+        .id-badge-chat { background: #eef3fa; padding: 1px 5px; border-radius: 14px; font-family: monospace; font-size: 0.6rem; font-weight: 600; color: #0e5954; display: inline-block; }
+        .info-box { background: #e8f4f1; border-left: 3px solid #1b7e79; padding: 4px 8px; margin: 5px 0; border-radius: 8px; font-size: 0.68rem; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="hero">
-        <h1><i class="fab fa-whatsapp"></i> PAD Saúde · Assistente com Cupom</h1>
-        <p>Agende, cancele ou remaneje consultas · Gere cupons de desconto para compartilhar</p>
-        <div class="badge-dual"><i class="fas fa-calendar-alt"></i> Horários disponíveis &nbsp;•&nbsp; <i class="fas fa-ticket-alt"></i> Cupom 20% OFF &nbsp;•&nbsp; <i class="fas fa-share-alt"></i> Compartilhe e ganhe</div>
+        <h1><i class="fab fa-whatsapp"></i> PAD Saúde</h1>
+        <p>Agende, cancele ou remaneje suas consultas</p>
+        <div class="badge-dual"><i class="fas fa-calendar-alt"></i> Horários disponíveis &nbsp;•&nbsp; <i class="fas fa-ticket-alt"></i> Cupom 20% OFF</div>
     </div>
 
     <div class="card">
@@ -67,12 +127,12 @@
             <i class="fab fa-whatsapp"></i>
             <h3>Central de Atendimento</h3>
         </div>
-        <div class="date-hint"><i class="fas fa-info-circle"></i> Digite <strong>5</strong> para gerar cupom de desconto de 20% OFF.</div>
+        <div class="date-hint"><i class="fas fa-info-circle"></i> Digite <strong>5</strong> para gerar cupom de desconto</div>
         
         <div class="whatsapp-simulator">
             <div class="chat-header"><i class="fab fa-whatsapp"></i> <span><strong>Atendente virtual PAD</strong> • Online</span></div>
             <div class="chat-messages" id="chatMessagesWA">
-                <div class="message-bot"><div class="message-bubble">🏥 Olá! Bem-vindo à PAD Saúde.<br><br>1️⃣ Agendar consulta (ver horários disponíveis)<br>2️⃣ Cancelar agendamento (usar ID)<br>3️⃣ Remarcar consulta (usar ID)<br>4️⃣ Ver minhas consultas (IDs e detalhes)<br>5️⃣ 🎁 Gerar cupom de desconto<br><br>Digite o número da opção:</div></div>
+                <div class="message-bot"><div class="message-bubble">🏥 Olá! Bem-vindo à PAD Saúde.<br><br>1️⃣ Agendar consulta<br>2️⃣ Cancelar agendamento<br>3️⃣ Remarcar consulta<br>4️⃣ Ver minhas consultas<br>5️⃣ 🎁 Gerar cupom<br><br>Digite o número da opção:</div></div>
             </div>
             <div class="input-area">
                 <input type="text" id="chatInputWA" placeholder="Digite sua mensagem..." autocomplete="off">
@@ -80,7 +140,7 @@
             </div>
         </div>
         
-        <div style="display: flex; justify-content: center; gap: 10px; margin: 0 1rem 1rem 1rem;">
+        <div class="reset-btn-container">
             <button id="resetChatWA" class="btn-secondary"><i class="fas fa-sync-alt"></i> Nova conversa</button>
         </div>
     </div>
@@ -157,10 +217,10 @@
     }
 
     function formatSlotsList(slots) {
-        if (slots.length === 0) return "⚠️ Nenhum horário disponível para essa especialidade nos próximos dias.";
+        if (slots.length === 0) return "⚠️ Nenhum horário disponível para essa especialidade.";
         let msg = "📅 <strong>Horários disponíveis:</strong><br>";
         slots.forEach((slot, idx) => { msg += `${idx+1}️⃣ ${slot.date} às ${slot.time}<br>`; });
-        msg += "<br>Digite o <strong>número</strong> do horário desejado:";
+        msg += "<br>Digite o <strong>número</strong> do horário:";
         return msg;
     }
 
@@ -182,18 +242,18 @@
     }
     
     function formatarListaConsultas() {
-        if (consultas.length === 0) return "📭 Você não possui consultas agendadas no momento.";
-        let lista = "📋 <strong>SUAS CONSULTAS AGENDADAS:</strong><br><br>";
+        if (consultas.length === 0) return "📭 Você não possui consultas agendadas.";
+        let lista = "📋 <strong>SUAS CONSULTAS:</strong><br><br>";
         consultas.forEach((c, idx) => {
             lista += `${idx+1}️⃣ <span class="id-badge-chat">ID: ${c.id}</span><br>`;
             lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br><br>`;
         });
-        lista += "💡 Guarde o ID para cancelar ou remarcar sua consulta.";
+        lista += "💡 Guarde o ID para cancelar ou remarcar.";
         return lista;
     }
 
     // ==============================================================
-    // GERADOR DE CUPOM COM INFORMAÇÕES DETALHADAS
+    // GERADOR DE CUPOM
     // ==============================================================
     function gerarCupomUnico() {
         const prefixo = "PAD";
@@ -207,7 +267,6 @@
     function exibirGerarCupom() {
         const cupomGerado = gerarCupomUnico();
         
-        // Mensagem completa com informações detalhadas
         const mensagemWhatsApp = `🏥 *PAD SAÚDE - CUPOM EXCLUSIVO!* 🎉
 
 *${cupomGerado}*
@@ -215,57 +274,26 @@
 ✅ *20% OFF* na sua primeira consulta!
 
 🔹 *Como funciona?*
-• Agende sua consulta pelo nosso WhatsApp
-• Apresente este cupom no momento do agendamento
-• O desconto é aplicado automaticamente
+• Agende pelo WhatsApp
+• Apresente o cupom no agendamento
+• Desconto aplicado automaticamente
 
-🔹 *Benefícios:*
-• Consulta com especialistas
-• Atendimento humanizado
-• Estrutura completa
-
-🔹 *Válido para:* Primeira consulta em qualquer especialidade
-
-📅 *Agende agora:* ${LINK_CARTAO}
-
-💚 *Cuide da sua saúde com a PAD!*`;
+📅 *Agende:* ${LINK_CARTAO}`;
         
         const whatsappLink = `https://wa.me/?text=${encodeURIComponent(mensagemWhatsApp)}`;
         
-        // Mensagem exibida no chat com informações completas
         const msgCupom = `
-            🎫 <strong>CUPOM DE DESCONTO GERADO!</strong><br><br>
-            🔖 <strong>Seu cupom:</strong><br>
-            <span style="background:#1b7e79; color:white; padding:8px 16px; border-radius:30px; font-family:monospace; font-size:1.1rem; display:inline-block; margin:8px 0;">${cupomGerado}</span><br><br>
-            
+            🎫 <strong>CUPOM DE DESCONTO!</strong><br><br>
+            🔖 <strong>${cupomGerado}</strong><br><br>
             <div class="info-box">
-            📌 <strong>COMO FUNCIONA:</strong><br>
-            • O cupom garante <strong>20% OFF</strong> na primeira consulta<br>
-            • Válido para qualquer especialidade médica<br>
-            • Apresente o código no momento do agendamento<br>
-            • Desconto aplicado diretamente na consulta<br>
-            • Cupom é pessoal e intransferível
+            📌 <strong>20% OFF na primeira consulta</strong><br>
+            • Qualquer especialidade<br>
+            • Apresente no agendamento<br>
+            • Economia de até R$ 50
             </div>
             
-            <div class="info-box">
-            💰 <strong>QUANTO VOCÊ GANHA:</strong><br>
-            • Consulta particular: a partir de R$ 250<br>
-            • Com 20% OFF: você paga apenas <strong>R$ 200</strong><br>
-            • Economia de <strong>R$ 50</strong> na sua primeira consulta!<br>
-            • Válido para consultas presenciais e telemedicina
-            </div>
-            
-            <div class="info-box">
-            ⭐ <strong>BENEFÍCIOS EXCLUSIVOS:</strong><br>
-            • Atendimento com especialistas qualificados<br>
-            • Agendamento rápido pelo WhatsApp<br>
-            • Horários flexíveis (manhã/tarde)<br>
-            • Lembrete automático da consulta
-            </div>
-            
-            👉 <a href="${whatsappLink}" target="_blank" style="background:#25D366; color:white; padding:8px 16px; border-radius:30px; text-decoration:none; display:inline-block; margin:8px 0;"><i class="fab fa-whatsapp"></i> Compartilhar cupom no WhatsApp</a><br><br>
-            
-            ✨ Ao clicar, escolha um contato e envie o cupom! Seu amigo ganha 20% OFF e você também pode ganhar benefícios especiais.
+            👉 <a href="${whatsappLink}" target="_blank" style="background:#25D366; color:white; padding:5px 12px; border-radius:30px; text-decoration:none; display:inline-block; margin:5px 0; font-size:0.7rem;"><i class="fab fa-whatsapp"></i> Compartilhar cupom</a><br><br>
+            ✨ Clique, escolha um contato e envie!
         `;
         addMessage(msgCupom);
         step = 5;
@@ -281,15 +309,15 @@
                 selectedSpecialty = espMap[input];
                 currentSlots = getAvailableSlots(selectedSpecialty);
                 if (currentSlots.length === 0) {
-                    addMessage(`😓 Infelizmente não há horários disponíveis para ${selectedSpecialty} nos próximos dias. Tente novamente mais tarde.`);
+                    addMessage(`😓 Sem horários para ${selectedSpecialty}.`);
                     step = 0;
                     addMessage("Menu: 1,2,3,4,5");
                     return;
                 }
                 step = 2;
-                addMessage(`✅ Especialidade: ${selectedSpecialty}. Confira os horários disponíveis:`);
+                addMessage(`✅ ${selectedSpecialty}. Horários disponíveis:`);
                 addMessage(formatSlotsList(currentSlots));
-            } else addMessage("Opção inválida. Escolha 1, 2, 3 ou 4.");
+            } else addMessage("Opção inválida. Escolha 1-4.");
             return;
         }
         if (step === 2) {
@@ -297,23 +325,23 @@
             if (!isNaN(escolha) && escolha >= 1 && escolha <= currentSlots.length) {
                 selectedSlot = currentSlots[escolha-1];
                 step = 3;
-                addMessage(`Você selecionou: ${selectedSlot.date} às ${selectedSlot.time}. Confirme com "SIM" para agendar.`);
-            } else addMessage(`Número inválido. Escolha um número entre 1 e ${currentSlots.length}.`);
+                addMessage(`Você escolheu: ${selectedSlot.date} às ${selectedSlot.time}. Confirme com "SIM".`);
+            } else addMessage(`Número inválido. Escolha 1-${currentSlots.length}.`);
             return;
         }
         if (step === 3) {
             if (input.toLowerCase() === "sim") {
                 const novoId = gerarIdUnicoNaoDuplicado();
                 adicionarConsulta(novoId, selectedSlot.date, selectedSlot.time, selectedSpecialty);
-                addMessage(`✅ CONSULTA AGENDADA COM SUCESSO!<br><br>📌 ${selectedSlot.date} às ${selectedSlot.time} - ${selectedSpecialty}<br>🔖 <span class="id-badge-chat" style="background:#1b7e79; color:white;">ID: ${novoId}</span><br><br>💡 Guarde este ID! Use a opção <strong>4</strong> para ver todas as suas consultas, ou use o ID para cancelar/remarcar.`);
+                addMessage(`✅ AGENDADO!<br>📌 ${selectedSlot.date} ${selectedSlot.time} - ${selectedSpecialty}<br>🔖 <span class="id-badge-chat">ID: ${novoId}</span>`);
                 step = 0;
                 selectedSpecialty = null; currentSlots = []; selectedSlot = null;
-                addMessage("Menu principal: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Ver consultas | 5-Cupom");
+                addMessage("Menu: 1,2,3,4,5");
             } else if (input.toLowerCase() === "cancelar") {
-                addMessage("❌ Agendamento cancelado. Voltando ao menu principal.");
+                addMessage("❌ Cancelado.");
                 step = 0;
                 addMessage("Menu: 1,2,3,4,5");
-            } else addMessage("Responda com 'SIM' para confirmar ou 'CANCELAR' para desistir.");
+            } else addMessage("Responda SIM ou CANCELAR.");
             return;
         }
     }
@@ -324,30 +352,22 @@
     function processGeneralCommand(input) {
         if (step !== 0 && step !== 5) return false;
         if (step === 5) {
-            addMessage("Use o botão verde acima para compartilhar o cupom. Digite 0 para voltar ao menu.");
-            if (input === "0") { step = 0; addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Ver consultas | 5-Cupom"); }
+            addMessage("Use o botão verde acima. Digite 0 para voltar.");
+            if (input === "0") { step = 0; addMessage("Menu: 1,2,3,4,5"); }
             return true;
         }
-        if (input === "1") { step = 1; addMessage("📌 Escolha a especialidade:<br>1️⃣ Clínico Geral<br>2️⃣ Cardiologia<br>3️⃣ Dermatologia<br>4️⃣ Pediatria<br>Digite o número:"); return true; }
-        if (input === "2") { 
-            addMessage("🔁 Informe o <strong>ID</strong> da consulta que deseja cancelar (ex: PAD-1234). Use a opção 4 para ver seus IDs:");
-            step = 99; 
-            return true; 
-        }
-        if (input === "3") { 
-            addMessage("🔄 Para remarcar, digite o ID da consulta seguido da nova data/hora no formato:<br><strong>ID DD/MM/AAAA HH:MM</strong><br>Exemplo: PAD-1234 28/12/2024 09:30<br><br>Use a opção 4 para ver seus IDs atuais:");
-            step = 98; 
-            return true; 
-        }
+        if (input === "1") { step = 1; addMessage("📌 Especialidade:<br>1 Clínico Geral<br>2 Cardiologia<br>3 Dermatologia<br>4 Pediatria<br>Digite:"); return true; }
+        if (input === "2") { addMessage("🔁 Informe o ID (ex: PAD-1234):"); step = 99; return true; }
+        if (input === "3") { addMessage("🔄 ID + nova data/hora<br>Ex: PAD-1234 28/12/2024 09:30"); step = 98; return true; }
         if (input === "4") {
             addMessage(formatarListaConsultas());
-            addMessage("Digite 0 para voltar ao menu.");
+            addMessage("Digite 0 para voltar.");
             step = 97;
             return true;
         }
         if (input === "5") { exibirGerarCupom(); return true; }
-        if (input === "0") { addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Ver consultas | 5-Cupom"); return true; }
-        addMessage("Opção inválida. Digite 1, 2, 3, 4 ou 5.");
+        if (input === "0") { addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Listar | 5-Cupom"); return true; }
+        addMessage("Opção inválida. Digite 1,2,3,4,5.");
         return true;
     }
 
@@ -359,9 +379,9 @@
             const consulta = buscarConsultaPorId(input);
             if (consulta) { 
                 removerConsultaPorId(input);
-                addMessage(`✅ Consulta ID ${input} cancelada com sucesso!<br>📌 ${consulta.date} às ${consulta.time} - ${consulta.specialty}`); 
+                addMessage(`✅ Cancelada ID ${input}`); 
             } else { 
-                addMessage(`❌ ID ${input} não encontrado. Use a opção 4 para ver seus IDs disponíveis.`); 
+                addMessage(`❌ ID ${input} não encontrado.`); 
             }
             step = 0; 
             addMessage("Menu: 1,2,3,4,5");
@@ -382,15 +402,15 @@
                         removerConsultaPorId(oldId);
                         const novoId = gerarIdUnicoNaoDuplicado();
                         adicionarConsulta(novoId, newDate, newTime, specialty);
-                        addMessage(`🔄 REMARCAÇÃO CONCLUÍDA!<br><br>📌 Nova consulta: ${newDate} às ${newTime} - ${specialty}<br>🔖 <span class="id-badge-chat" style="background:#1b7e79; color:white;">NOVO ID: ${novoId}</span><br><br>O ID antigo (${oldId}) foi substituído. Use a opção 4 para ver todas as suas consultas.`);
+                        addMessage(`🔄 Remarcado!<br>📌 ${newDate} ${newTime}<br>🔖 Novo ID: ${novoId}`);
                     } else {
-                        addMessage(`❌ ID ${oldId} não localizado. Use a opção 4 para ver seus IDs disponíveis.`);
+                        addMessage(`❌ ID ${oldId} não encontrado.`);
                     }
                 } else {
-                    addMessage("Data ou horário inválido. Use DD/MM/AAAA HH:MM (ex: 25/12/2024 09:30)");
+                    addMessage("Data/hora inválida. Use DD/MM/AAAA HH:MM");
                 }
             } else {
-                addMessage("Formato inválido. Exemplo: PAD-1234 25/12/2024 09:30");
+                addMessage("Formato: ID DD/MM/AAAA HH:MM");
             }
             step = 0;
             addMessage("Menu: 1,2,3,4,5");
@@ -398,7 +418,7 @@
         }
         if (step === 97) {
             if (input === "0") { step = 0; addMessage("Menu: 1,2,3,4,5"); } 
-            else { addMessage("Digite 0 para voltar ao menu."); }
+            else { addMessage("Digite 0 para voltar."); }
             return true;
         }
         return false;
@@ -428,7 +448,7 @@
         currentSlots = []; 
         selectedSlot = null;
         chatContainer.innerHTML = '';
-        addMessage("🏥 Conversa reiniciada.<br><br>1️⃣ Agendar consulta (ver horários disponíveis)<br>2️⃣ Cancelar agendamento (usar ID)<br>3️⃣ Remarcar consulta (usar ID)<br>4️⃣ Ver minhas consultas (IDs e detalhes)<br>5️⃣ 🎁 Gerar cupom de desconto<br><br>Digite o número da opção:");
+        addMessage("🏥 Conversa reiniciada.<br><br>1️⃣ Agendar consulta<br>2️⃣ Cancelar<br>3️⃣ Remarcar<br>4️⃣ Ver consultas<br>5️⃣ Gerar cupom<br><br>Digite o número:");
     };
 </script>
 </body>
