@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>PAD Saúde · Assistente WhatsApp</title>
+    <title>PAD Saúde · Assistente WhatsApp com Firebase</title>
     <!-- Google Fonts + Font Awesome 6 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -48,8 +51,9 @@
             margin-top: 0.8rem; 
             gap: 1rem; 
             color: #e0f3f0; 
+            flex-wrap: wrap;
+            justify-content: center;
         }
-        
         .card { 
             background: rgba(255,255,255,0.98); 
             border-radius: 2rem; 
@@ -60,10 +64,12 @@
         .card-header { 
             display: flex; 
             align-items: center; 
-            gap: 12px; 
+            justify-content: space-between;
             padding: 1.2rem 1.5rem 0.8rem 1.5rem; 
             border-bottom: 2px solid #eef3f8; 
+            flex-wrap: wrap;
         }
+        .card-header-left { display: flex; align-items: center; gap: 12px; }
         .card-header i { 
             font-size: 1.6rem; 
             color: #146b65; 
@@ -71,10 +77,7 @@
             padding: 10px; 
             border-radius: 1rem; 
         }
-        .card-header h3 { 
-            font-weight: 700; 
-            font-size: 1.3rem; 
-        }
+        .card-header h3 { font-weight: 700; font-size: 1.3rem; }
         .date-hint { 
             background: #eef3fa; 
             border-radius: 1rem; 
@@ -85,8 +88,8 @@
             display: flex; 
             align-items: center; 
             gap: 8px; 
+            flex-wrap: wrap;
         }
-        
         .whatsapp-simulator { 
             background: #f5f9fe; 
             border-radius: 1.5rem; 
@@ -102,9 +105,6 @@
             align-items: center; 
             gap: 10px; 
             font-size: 1rem; 
-        }
-        .chat-header i { 
-            font-size: 1.3rem; 
         }
         .chat-messages { 
             height: 450px; 
@@ -134,15 +134,6 @@
             border-radius: 1.2rem 1.2rem 0.3rem 1.2rem; 
             font-size: 0.92rem;
         }
-        .message-bot .message-bubble a { 
-            color: #146b65; 
-            font-weight: 600; 
-            text-decoration: none; 
-            border-bottom: 1px dashed #146b65; 
-        }
-        .message-bot .message-bubble a:hover { text-decoration: underline; }
-        
-        /* Input area */
         .input-area { 
             display: flex; 
             gap: 10px; 
@@ -190,66 +181,67 @@
             transition: 0.2s;
         }
         .btn-secondary:hover { background: #146b65; color: white; }
-        
-        .reset-btn-container { display: flex; justify-content: center; gap: 12px; margin: 1rem 1.5rem 1.2rem 1.5rem; }
-        .footer { 
-            margin-top: 1.5rem; 
-            text-align: center; 
-            font-size: 0.8rem; 
-            color: #5f8a86; 
-            padding: 1rem; 
-            border-top: 1px solid rgba(27,94,87,0.15); 
-        }
-        
+        .reset-btn-container { display: flex; justify-content: center; gap: 12px; margin: 1rem 1.5rem 1.2rem 1.5rem; flex-wrap: wrap; }
+        .footer { margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: #5f8a86; padding: 1rem; border-top: 1px solid rgba(27,94,87,0.15); }
         @media (max-width: 700px) { 
             .chat-messages { height: 420px; } 
-            .hero { padding: 1.5rem; }
             .hero h1 { font-size: 1.8rem; }
-            .hero p { font-size: 0.9rem; }
-            .badge-dual { font-size: 0.75rem; }
-            .card-header h3 { font-size: 1.1rem; }
-            .message-bubble { font-size: 0.85rem; }
+            .card-header { flex-direction: column; align-items: flex-start; gap: 10px; }
         }
-        
-        .id-badge-chat { 
-            background: #eef3fa; 
-            padding: 3px 8px; 
-            border-radius: 20px; 
-            font-family: monospace; 
+        .id-badge-chat { background: #eef3fa; padding: 3px 8px; border-radius: 20px; font-family: monospace; font-size: 0.75rem; font-weight: 700; color: #0e5954; display: inline-block; }
+        .info-box { background: #e8f4f1; border-left: 4px solid #1b7e79; padding: 10px 12px; margin: 8px 0; border-radius: 10px; font-size: 0.85rem; }
+        .unidade-detail { background: #f0f7fa; border-radius: 12px; padding: 10px 12px; margin-top: 8px; font-size: 0.85rem; border-left: 3px solid #146b65; }
+        .btn-mapa { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            background: #4285F4; 
+            color: white; 
+            padding: 6px 12px; 
+            border-radius: 25px; 
+            text-decoration: none; 
             font-size: 0.75rem; 
-            font-weight: 700; 
-            color: #0e5954; 
-            display: inline-block; 
+            font-weight: 600;
+            margin-top: 8px;
+            transition: 0.2s;
         }
-        .info-box { 
-            background: #e8f4f1; 
-            border-left: 4px solid #1b7e79; 
-            padding: 10px 12px; 
-            margin: 8px 0; 
-            border-radius: 10px; 
-            font-size: 0.85rem; 
-        }
+        .btn-mapa:hover { background: #3367D6; transform: scale(1.02); }
+        .sync-badge { background: #25D366; color: white; border-radius: 20px; padding: 4px 12px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 5px; }
+        .cupom-stats { background: linear-gradient(135deg, #f5f0e6, #faf5e8); border-radius: 12px; padding: 6px 12px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 8px; margin-left: 10px; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="hero">
         <h1><i class="fab fa-whatsapp"></i> PAD Saúde</h1>
-        <p>Agende, cancele ou remaneje suas consultas</p>
-        <div class="badge-dual"><i class="fas fa-calendar-alt"></i> Horários disponíveis &nbsp;•&nbsp; <i class="fas fa-ticket-alt"></i> Cupom 20% OFF</div>
+        <p>Agende, cancele ou remaneje suas consultas • Cupons salvos em nuvem</p>
+        <div class="badge-dual">
+            <i class="fas fa-map-marker-alt"></i> Caruaru • Recife 
+            &nbsp;•&nbsp; <i class="fas fa-ticket-alt"></i> Cupom 20% OFF 
+            &nbsp;•&nbsp; <i class="fas fa-database"></i> Dados + Cupons salvos
+        </div>
     </div>
 
     <div class="card">
         <div class="card-header">
-            <i class="fab fa-whatsapp"></i>
-            <h3>Central de Atendimento</h3>
+            <div class="card-header-left">
+                <i class="fab fa-whatsapp"></i>
+                <h3>Central de Atendimento</h3>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <div class="cupom-stats" id="cupomStats"><i class="fas fa-ticket-alt"></i> <span id="cupomCount">0</span> cupons gerados</div>
+                <div class="sync-badge" id="syncStatus"><i class="fas fa-cloud-upload-alt"></i> Sincronizado</div>
+            </div>
         </div>
-        <div class="date-hint"><i class="fas fa-info-circle"></i> <strong>💡 Dica:</strong> Digite <strong style="background:#146b65; color:white; padding:2px 8px; border-radius:20px;">5</strong> para gerar cupom de desconto de 20%</div>
+        <div class="date-hint">
+            <i class="fas fa-info-circle"></i> 
+            <strong>💡 Dica:</strong> Digite <strong style="background:#146b65; color:white; padding:2px 8px; border-radius:20px;">5</strong> para gerar cupom • Os cupons são salvos no Firebase com data e hora
+        </div>
         
         <div class="whatsapp-simulator">
             <div class="chat-header"><i class="fab fa-whatsapp"></i> <span><strong>Atendente virtual PAD</strong> • Online</span></div>
             <div class="chat-messages" id="chatMessagesWA">
-                <div class="message-bot"><div class="message-bubble">🏥 <strong>Olá! Bem-vindo à PAD Saúde.</strong><br><br>1️⃣ Agendar consulta<br>2️⃣ Cancelar agendamento<br>3️⃣ Remarcar consulta<br>4️⃣ Ver minhas consultas<br>5️⃣ 🎁 Gerar cupom<br><br>Digite o número da opção:</div></div>
+                <div class="message-bot"><div class="message-bubble">🏥 <strong>Olá! Bem-vindo à PAD Saúde.</strong><br><br>1️⃣ Agendar consulta<br>2️⃣ Cancelar agendamento<br>3️⃣ Remarcar consulta<br>4️⃣ Ver minhas consultas<br>5️⃣ 🎁 Gerar cupom<br>6️⃣ 📊 Ver meus cupons<br><br>Digite o número da opção:</div></div>
             </div>
             <div class="input-area">
                 <input type="text" id="chatInputWA" placeholder="Digite sua mensagem..." autocomplete="off">
@@ -259,47 +251,227 @@
         
         <div class="reset-btn-container">
             <button id="resetChatWA" class="btn-secondary"><i class="fas fa-sync-alt"></i> Nova conversa</button>
+            <button id="syncFromFirebase" class="btn-secondary"><i class="fas fa-cloud-download-alt"></i> Carregar dados</button>
+            <button id="verCuponsBtn" class="btn-secondary"><i class="fas fa-ticket-alt"></i> Ver meus cupons</button>
         </div>
     </div>
     
     <div class="footer">
-        <i class="fab fa-whatsapp"></i> Gere cupons de 20% OFF e compartilhe com amigos
+        <i class="fab fa-whatsapp"></i> Gere cupons de 20% OFF • Todos os cupons são salvos no Firebase com timestamp
     </div>
 </div>
 
 <script>
     // ==============================================================
-    // ARRAY PARA ARMAZENAR AS CONSULTAS
+    // CONFIGURAÇÃO DO FIREBASE
     // ==============================================================
-    let consultas = [
-        { id: "PAD-1001", date: "15/12/2024", time: "10:00", specialty: "Clínico Geral" },
-        { id: "PAD-1002", date: "18/12/2024", time: "14:30", specialty: "Cardiologia" }
-    ];
+    const firebaseConfig = {
+        apiKey: "AIzaSyCyxo7Yr5e49ghtJtcFdC0hUneabN55AdI",
+        authDomain: "pad-saude.firebaseapp.com",
+        databaseURL: "https://pad-saude-default-rtdb.firebaseio.com",
+        projectId: "pad-saude",
+        storageBucket: "pad-saude.firebasestorage.app",
+        messagingSenderId: "319207934229",
+        appId: "1:319207934229:web:816b708430b29fd90c811c",
+        measurementId: "G-L4J1JWSQCX"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const consultasRef = database.ref('consultas');
+    const cuponsRef = database.ref('cupons');
     
     // ==============================================================
-    // GERADOR DE ID ÚNICO
+    // DADOS DAS CIDADES/UNIDADES COM LINKS DO MAPA
     // ==============================================================
-    function gerarIdUnico() {
-        const prefixo = "PAD";
-        const numeros = Math.floor(Math.random() * 9000 + 1000).toString();
-        return `${prefixo}-${numeros}`;
+    function gerarLinkMapa(enderecoCompleto) {
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoCompleto)}`;
     }
     
-    function idExiste(id) {
-        return consultas.some(c => c.id === id);
+    const cidadesDisponiveis = {
+        1: { 
+            nome: "Caruaru-PE", 
+            endereco: "R. Nossa Senhora de Fátima, 78, Maurício de Nassau", 
+            complemento: "Clínica PAD Saúde e Cartão PAD Saúde +",
+            enderecoCompleto: "R. Nossa Senhora de Fátima, 78 - Maurício de Nassau, Caruaru - PE, 55034-105"
+        },
+        2: { 
+            nome: "Recife-PE (Madalena)", 
+            endereco: "R. Hermógenes de Morais, 317, Madalena", 
+            complemento: "Clínica PAD Saúde",
+            enderecoCompleto: "R. Hermógenes de Morais, 317 - Madalena, Recife - PE, 50710-120"
+        },
+        3: { 
+            nome: "Recife-PE (Home Care)", 
+            endereco: "R. José Higino, 247, Madalena", 
+            complemento: "Home Care",
+            enderecoCompleto: "R. José Higino, 247 - Madalena, Recife - PE, 50710-190"
+        }
+    };
+    
+    // Estado da aplicação
+    let consultas = [];
+    let cupons = []; // Array para armazenar cupons gerados nesta sessão
+    let step = 0;
+    let selectedSpecialty = null;
+    let currentSlots = [];
+    let selectedSlot = null;
+    let selectedCidade = null;
+    let selectedCidadeInfo = null;
+    
+    const chatContainer = document.getElementById('chatMessagesWA');
+    const syncStatusSpan = document.getElementById('syncStatus');
+    const cupomCountSpan = document.getElementById('cupomCount');
+    
+    function updateSyncStatus(saving = false, error = false) {
+        if (saving) syncStatusSpan.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Salvando...';
+        else if (error) syncStatusSpan.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erro sync';
+        else syncStatusSpan.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Sincronizado';
+        setTimeout(() => {
+            if (!saving) syncStatusSpan.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Sincronizado';
+        }, 1500);
     }
     
-    function gerarIdUnicoNaoDuplicado() {
-        let novoId;
-        do {
-            novoId = gerarIdUnico();
-        } while (idExiste(novoId));
-        return novoId;
+    function updateCupomCount() {
+        cupomCountSpan.innerText = cupons.length;
     }
-
-    // ==============================================================
-    // AGENDA COM HORÁRIOS DISPONÍVEIS
-    // ==============================================================
+    
+    // Gerar ID único para consultas
+    async function gerarIdUnico() {
+        const snapshot = await consultasRef.once('value');
+        const todasConsultas = snapshot.val();
+        let maxNum = 1000;
+        if (todasConsultas) {
+            Object.values(todasConsultas).forEach(cons => {
+                if (cons.id && cons.id.startsWith('PAD-')) {
+                    const num = parseInt(cons.id.split('-')[1]);
+                    if (!isNaN(num) && num > maxNum) maxNum = num;
+                }
+            });
+        }
+        const novoNum = maxNum + 1;
+        return `PAD-${novoNum}`;
+    }
+    
+    // Salvar consultas no Firebase
+    async function salvarConsultasNoFirebase() {
+        updateSyncStatus(true, false);
+        try {
+            const consultasObj = {};
+            consultas.forEach(cons => {
+                consultasObj[cons.id] = {
+                    id: cons.id,
+                    date: cons.date,
+                    time: cons.time,
+                    specialty: cons.specialty,
+                    cidade: cons.cidade,
+                    enderecoCompleto: cons.enderecoCompleto,
+                    linkMapa: cons.linkMapa,
+                    createdAt: cons.createdAt || new Date().toISOString()
+                };
+            });
+            await consultasRef.set(consultasObj);
+            updateSyncStatus(false, false);
+        } catch (error) {
+            console.error('Erro ao salvar consultas:', error);
+            updateSyncStatus(false, true);
+        }
+    }
+    
+    // Salvar cupom no Firebase
+    async function salvarCupomNoFirebase(cupom) {
+        try {
+            const cupomRef = cuponsRef.push();
+            await cupomRef.set({
+                codigo: cupom.codigo,
+                dataGeracao: cupom.dataGeracao,
+                desconto: cupom.desconto,
+                utilizado: cupom.utilizado || false,
+                compartilhado: cupom.compartilhado || false
+            });
+            console.log('✅ Cupom salvo no Firebase:', cupom.codigo);
+        } catch (error) {
+            console.error('Erro ao salvar cupom:', error);
+        }
+    }
+    
+    // Carregar cupons do Firebase
+    async function carregarCuponsDoFirebase() {
+        try {
+            const snapshot = await cuponsRef.once('value');
+            const data = snapshot.val();
+            if (data) {
+                cupons = Object.values(data).map(cup => ({
+                    codigo: cup.codigo,
+                    dataGeracao: cup.dataGeracao,
+                    desconto: cup.desconto,
+                    utilizado: cup.utilizado || false,
+                    compartilhado: cup.compartilhado || false
+                }));
+                updateCupomCount();
+                console.log(`📥 Carregados ${cupons.length} cupons do Firebase`);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar cupons:', error);
+        }
+    }
+    
+    // Carregar consultas do Firebase
+    async function carregarConsultasDoFirebase() {
+        updateSyncStatus(true, false);
+        try {
+            const snapshot = await consultasRef.once('value');
+            const data = snapshot.val();
+            if (data && Object.keys(data).length > 0) {
+                consultas = Object.values(data).map(cons => ({
+                    id: cons.id,
+                    date: cons.date,
+                    time: cons.time,
+                    specialty: cons.specialty,
+                    cidade: cons.cidade || "Caruaru-PE",
+                    enderecoCompleto: cons.enderecoCompleto || "",
+                    linkMapa: cons.linkMapa || "",
+                    createdAt: cons.createdAt
+                }));
+            } else {
+                consultas = [
+                    { id: "PAD-1001", date: "15/12/2024", time: "10:00", specialty: "Clínico Geral", cidade: "Caruaru-PE", enderecoCompleto: "R. Nossa Senhora de Fátima, 78 - Maurício de Nassau, Caruaru - PE, 55034-105", linkMapa: gerarLinkMapa("R. Nossa Senhora de Fátima, 78 - Maurício de Nassau, Caruaru - PE"), createdAt: new Date().toISOString() },
+                    { id: "PAD-1002", date: "18/12/2024", time: "14:30", specialty: "Cardiologia", cidade: "Recife-PE (Madalena)", enderecoCompleto: "R. Hermógenes de Morais, 317 - Madalena, Recife - PE, 50710-120", linkMapa: gerarLinkMapa("R. Hermógenes de Morais, 317 - Madalena, Recife - PE"), createdAt: new Date().toISOString() }
+                ];
+                await salvarConsultasNoFirebase();
+            }
+            updateSyncStatus(false, false);
+            return true;
+        } catch (error) {
+            console.error('Erro ao carregar consultas:', error);
+            updateSyncStatus(false, true);
+            return false;
+        }
+    }
+    
+    function formatarComLinkMapa(endereco, linkMapa) {
+        return `${endereco}<br><a href="${linkMapa}" target="_blank" class="btn-mapa"><i class="fas fa-map-marker-alt"></i> 📍 Como chegar (Abrir mapa)</a>`;
+    }
+    
+    async function adicionarConsulta(id, date, time, specialty, cidadeNome, enderecoCompleto, linkMapa) {
+        consultas.push({ id, date, time, specialty, cidade: cidadeNome, enderecoCompleto, linkMapa, createdAt: new Date().toISOString() });
+        await salvarConsultasNoFirebase();
+    }
+    
+    async function removerConsultaPorId(id) {
+        const index = consultas.findIndex(c => c.id === id);
+        if (index !== -1) {
+            consultas.splice(index, 1);
+            await salvarConsultasNoFirebase();
+            return true;
+        }
+        return false;
+    }
+    
+    function buscarConsultaPorId(id) {
+        return consultas.find(c => c.id === id);
+    }
+    
     function getAvailableSlots(specialty) {
         const slots = [];
         const today = new Date();
@@ -318,13 +490,7 @@
         }
         return slots.slice(0, 12);
     }
-
-    let step = 0;
-    let selectedSpecialty = null;
-    let currentSlots = [];
-    let selectedSlot = null;
-
-    const chatContainer = document.getElementById('chatMessagesWA');
+    
     function addMessage(text, isUser = false) {
         const div = document.createElement('div');
         div.className = isUser ? 'message-user' : 'message-bot';
@@ -332,7 +498,7 @@
         chatContainer.appendChild(div);
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
-
+    
     function formatSlotsList(slots) {
         if (slots.length === 0) return "⚠️ Nenhum horário disponível para essa especialidade.";
         let msg = "📅 <strong>Horários disponíveis:</strong><br><br>";
@@ -340,102 +506,125 @@
         msg += "<br>Digite o <strong>número</strong> do horário:";
         return msg;
     }
-
-    function adicionarConsulta(id, date, time, specialty) {
-        consultas.push({ id, date, time, specialty });
-    }
-    
-    function removerConsultaPorId(id) {
-        const index = consultas.findIndex(c => c.id === id);
-        if (index !== -1) {
-            consultas.splice(index, 1);
-            return true;
-        }
-        return false;
-    }
-    
-    function buscarConsultaPorId(id) {
-        return consultas.find(c => c.id === id);
-    }
     
     function formatarListaConsultas() {
         if (consultas.length === 0) return "📭 Você não possui consultas agendadas.";
         let lista = "📋 <strong>SUAS CONSULTAS:</strong><br><br>";
         consultas.forEach((c, idx) => {
             lista += `${idx+1}️⃣ <span class="id-badge-chat">ID: ${c.id}</span><br>`;
-            lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br><br>`;
+            lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br>`;
+            lista += `   📍 ${c.cidade || "Cidade não informada"}<br>`;
+            if (c.enderecoCompleto) {
+                lista += `   🏥 ${c.enderecoCompleto}<br>`;
+                if (c.linkMapa) {
+                    lista += `   <a href="${c.linkMapa}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; background:#e8f0fe; padding:3px 10px; border-radius:20px; font-size:0.7rem; color:#1a73e8; text-decoration:none; margin-top:5px;"><i class="fas fa-map-marker-alt"></i> Como chegar (mapa)</a><br>`;
+                }
+            }
+            lista += `<br>`;
         });
         lista += "💡 Guarde o ID para cancelar ou remarcar.";
         return lista;
     }
-
-    // ==============================================================
-    // GERADOR DE CUPOM
-    // ==============================================================
+    
+    function formatarListaCupons() {
+        if (cupons.length === 0) return "📭 Nenhum cupom gerado ainda. Digite 5 para gerar seu primeiro cupom!";
+        let lista = "🎫 <strong>SEUS CUPONS DE DESCONTO:</strong><br><br>";
+        cupons.forEach((cup, idx) => {
+            const dataFormatada = cup.dataGeracao ? new Date(cup.dataGeracao).toLocaleString('pt-BR') : 'Data desconhecida';
+            lista += `${idx+1}️⃣ <strong style="font-size:1rem; background:#f0f7f5; padding:4px 10px; border-radius:12px;">${cup.codigo}</strong><br>`;
+            lista += `   📅 Gerado em: ${dataFormatada}<br>`;
+            lista += `   💰 Desconto: ${cup.desconto}<br>`;
+            lista += `   ${cup.utilizado ? '❌ Já utilizado' : '✅ Disponível para uso'}<br><br>`;
+        });
+        lista += "💡 Apresente o código na hora do agendamento para ganhar 20% OFF!";
+        return lista;
+    }
+    
+    // Gerar cupom e salvar no Firebase
     function gerarCupomUnico() {
         const prefixo = "PAD";
         const numeros = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
         const letras = Math.random().toString(36).substring(2, 6).toUpperCase();
         return `${prefixo}${numeros}${letras}`;
     }
-
+    
     const LINK_CARTAO = "https://cartaopadsaude.com.br/";
     
-    function exibirGerarCupom() {
+    async function exibirGerarCupom() {
         const cupomGerado = gerarCupomUnico();
+        const dataAtual = new Date().toISOString();
         
-        const mensagemWhatsApp = `🏥 *PAD SAÚDE - CUPOM EXCLUSIVO!* 🎉
-
-*${cupomGerado}*
-
-✅ *20% OFF* na sua primeira consulta!
-
-🔹 *Como funciona?*
-• Agende pelo WhatsApp
-• Apresente o cupom no agendamento
-• Desconto aplicado automaticamente
-
-📅 *Agende:* ${LINK_CARTAO}`;
+        const novoCupom = {
+            codigo: cupomGerado,
+            dataGeracao: dataAtual,
+            desconto: "20% OFF na primeira consulta",
+            utilizado: false,
+            compartilhado: false
+        };
         
+        cupons.push(novoCupom);
+        await salvarCupomNoFirebase(novoCupom);
+        updateCupomCount();
+        
+        const mensagemWhatsApp = `🏥 *PAD SAÚDE - CUPOM EXCLUSIVO!* 🎉\n\n*${cupomGerado}*\n\n✅ *20% OFF* na sua primeira consulta!\n📅 *Gerado em:* ${new Date(dataAtual).toLocaleString('pt-BR')}\n\n🔹 *Como funciona?*\n• Agende pelo WhatsApp\n• Apresente o cupom no agendamento\n• Desconto aplicado automaticamente\n\n📅 *Agende:* ${LINK_CARTAO}`;
         const whatsappLink = `https://wa.me/?text=${encodeURIComponent(mensagemWhatsApp)}`;
         
         const msgCupom = `
-            🎫 <strong style="font-size:1.1rem;">🎁 CUPOM DE DESCONTO!</strong><br><br>
-            🔖 <strong style="font-size:1.3rem; background:#f0f7f5; padding:8px 12px; border-radius:12px; display:inline-block;">${cupomGerado}</strong><br><br>
+            🎫 <strong>🎁 CUPOM DE DESCONTO GERADO!</strong><br><br>
+            🔖 <strong style="font-size:1.5rem; background:#f0f7f5; padding:10px 16px; border-radius:12px; display:inline-block;">${cupomGerado}</strong><br><br>
             <div class="info-box">
-            📌 <strong>✨ 20% OFF na primeira consulta</strong><br>
+            📌 <strong>✨ ${novoCupom.desconto}</strong><br>
+            • Gerado em: ${new Date(dataAtual).toLocaleString('pt-BR')}<br>
             • Qualquer especialidade médica<br>
-            • Válido para consultas presenciais e telemedicina<br>
-            • Apresente no momento do agendamento<br>
-            • Economia de até R$ 80,00
+            • Válido para todas as unidades (Caruaru/Recife)<br>
+            • Apresente no momento do agendamento
             </div>
             
-            👉 <a href="${whatsappLink}" target="_blank" style="background:#25D366; color:white; padding:8px 18px; border-radius:40px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; margin:10px 0; font-size:0.85rem; font-weight:600;"><i class="fab fa-whatsapp"></i> Compartilhar cupom</a><br><br>
-            ✨ Clique no botão acima, escolha um contato e compartilhe!
+            👉 <a href="${whatsappLink}" target="_blank" style="background:#25D366; color:white; padding:8px 18px; border-radius:40px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; margin:10px 0;"><i class="fab fa-whatsapp"></i> Compartilhar cupom</a><br><br>
+            ✨ Total de cupons gerados: <strong>${cupons.length}</strong><br>
+            💾 Cupom salvo no Firebase com timestamp!
         `;
         addMessage(msgCupom);
         step = 5;
     }
-
-    // ==============================================================
-    // FLUXO DE AGENDAMENTO
-    // ==============================================================
-    function processAgendamento(input) {
+    
+    async function verCupons() {
+        await carregarCuponsDoFirebase();
+        addMessage(formatarListaCupons());
+        addMessage("Digite 0 para voltar ao menu.");
+        step = 50;
+    }
+    
+    // Fluxo de agendamento
+    async function processAgendamento(input) {
         if (step === 1) {
             const espMap = { "1": "Clínico Geral", "2": "Cardiologia", "3": "Dermatologia", "4": "Pediatria" };
             if (espMap[input]) {
                 selectedSpecialty = espMap[input];
+                step = 1.5;
+                addMessage(`✅ Especialidade selecionada: <strong>${selectedSpecialty}</strong>.`);
+                addMessage(`📍 <strong>Agora escolha a unidade/cidade:</strong><br><br>1️⃣ Caruaru-PE (Clínica PAD Saúde + Cartão)<br>2️⃣ Recife-PE (Madalena - Clínica PAD Saúde)<br>3️⃣ Recife-PE (Home Care)<br><br>Digite o número da unidade desejada:`);
+            } else addMessage("Opção inválida. Escolha 1-4.");
+            return;
+        }
+        if (step === 1.5) {
+            const cidadeMap = { "1": 1, "2": 2, "3": 3 };
+            if (cidadeMap[input]) {
+                selectedCidadeInfo = cidadesDisponiveis[cidadeMap[input]];
+                selectedCidade = selectedCidadeInfo.nome;
                 currentSlots = getAvailableSlots(selectedSpecialty);
                 if (currentSlots.length === 0) {
-                    addMessage(`😓 Sem horários para ${selectedSpecialty}.`);
+                    addMessage(`😓 Sem horários disponíveis para ${selectedSpecialty} em ${selectedCidade}.`);
                     step = 0;
-                    addMessage("Menu: 1,2,3,4,5");
+                    addMessage("Menu: 1,2,3,4,5,6");
                     return;
                 }
                 step = 2;
-                addMessage(`✅ Especialidade selecionada: <strong>${selectedSpecialty}</strong>.`);
+                const linkMapa = gerarLinkMapa(selectedCidadeInfo.enderecoCompleto);
+                const enderecoFormatado = formatarComLinkMapa(selectedCidadeInfo.enderecoCompleto, linkMapa);
+                addMessage(`📍 <strong>Unidade escolhida:</strong> ${selectedCidadeInfo.nome}<br>📌 ${selectedCidadeInfo.endereco}<br>📋 ${selectedCidadeInfo.complemento}<br>${enderecoFormatado}`);
                 addMessage(formatSlotsList(currentSlots));
-            } else addMessage("Opção inválida. Escolha 1-4.");
+            } else addMessage("Opção inválida. Escolha 1, 2 ou 3.");
             return;
         }
         if (step === 2) {
@@ -443,66 +632,59 @@
             if (!isNaN(escolha) && escolha >= 1 && escolha <= currentSlots.length) {
                 selectedSlot = currentSlots[escolha-1];
                 step = 3;
-                addMessage(`📌 Você escolheu: <strong>${selectedSlot.date} às ${selectedSlot.time}</strong>. Confirme com <strong>"SIM"</strong> ou cancele com <strong>"CANCELAR"</strong>.`);
+                addMessage(`📌 Você escolheu: <strong>${selectedSlot.date} às ${selectedSlot.time}</strong> em ${selectedCidade}. Confirme com <strong>"SIM"</strong> ou "CANCELAR".`);
             } else addMessage(`Número inválido. Escolha 1-${currentSlots.length}.`);
             return;
         }
         if (step === 3) {
             if (input.toLowerCase() === "sim") {
-                const novoId = gerarIdUnicoNaoDuplicado();
-                adicionarConsulta(novoId, selectedSlot.date, selectedSlot.time, selectedSpecialty);
-                addMessage(`✅ <strong>CONSULTA AGENDADA COM SUCESSO!</strong><br><br>📌 ${selectedSlot.date} às ${selectedSlot.time}<br>🏥 ${selectedSpecialty}<br>🔖 <span class="id-badge-chat">ID: ${novoId}</span><br><br>💡 Guarde este ID para futuras consultas.`);
+                const novoId = await gerarIdUnico();
+                const enderecoCompleto = selectedCidadeInfo.enderecoCompleto;
+                const linkMapa = gerarLinkMapa(enderecoCompleto);
+                await adicionarConsulta(novoId, selectedSlot.date, selectedSlot.time, selectedSpecialty, selectedCidade, enderecoCompleto, linkMapa);
+                const enderecoFormatado = formatarComLinkMapa(enderecoCompleto, linkMapa);
+                addMessage(`✅ <strong>CONSULTA AGENDADA COM SUCESSO!</strong><br><br>📍 <strong>${selectedCidade}</strong><br>📌 ${selectedSlot.date} às ${selectedSlot.time}<br>🔬 ${selectedSpecialty}<br>🔖 <span class="id-badge-chat">ID: ${novoId}</span><br><br>🏥 <strong>Endereço da unidade:</strong><br>${enderecoFormatado}<br><br>💡 Guarde este ID para cancelamentos ou remarcações.`);
                 step = 0;
-                selectedSpecialty = null; currentSlots = []; selectedSlot = null;
-                addMessage("Menu principal: 1,2,3,4,5");
+                selectedSpecialty = null; currentSlots = []; selectedSlot = null; selectedCidade = null; selectedCidadeInfo = null;
+                addMessage("Menu principal: 1,2,3,4,5,6");
             } else if (input.toLowerCase() === "cancelar") {
                 addMessage("❌ Agendamento cancelado.");
                 step = 0;
-                addMessage("Menu: 1,2,3,4,5");
+                addMessage("Menu: 1,2,3,4,5,6");
             } else addMessage("Responda SIM ou CANCELAR.");
             return;
         }
     }
-
-    // ==============================================================
-    // COMANDOS GERAIS
-    // ==============================================================
+    
     function processGeneralCommand(input) {
-        if (step !== 0 && step !== 5) return false;
-        if (step === 5) {
-            addMessage("💡 Use o botão verde acima para compartilhar. Digite <strong>0</strong> para voltar ao menu.");
-            if (input === "0") { step = 0; addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Listar | 5-Cupom"); }
+        if (step !== 0 && step !== 5 && step !== 50) return false;
+        
+        if (step === 5 || step === 50) {
+            if (input === "0") { step = 0; addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Listar | 5-Cupom | 6-Meus cupons"); }
+            else if (step === 50) addMessage("Digite 0 para voltar ao menu.");
+            else addMessage("Digite 0 para voltar ao menu.");
             return true;
         }
-        if (input === "1") { step = 1; addMessage("📌 <strong>Escolha a especialidade:</strong><br><br>1️⃣ Clínico Geral<br>2️⃣ Cardiologia<br>3️⃣ Dermatologia<br>4️⃣ Pediatria<br><br>Digite o número:"); return true; }
-        if (input === "2") { addMessage("🔁 <strong>Cancelar consulta</strong><br><br>Informe o ID da consulta (ex: PAD-1234):"); step = 99; return true; }
-        if (input === "3") { addMessage("🔄 <strong>Remarcar consulta</strong><br><br>Digite no formato:<br><strong>ID DD/MM/AAAA HH:MM</strong><br>Exemplo: PAD-1001 28/12/2024 09:30"); step = 98; return true; }
-        if (input === "4") {
-            addMessage(formatarListaConsultas());
-            addMessage("Digite <strong>0</strong> para voltar ao menu.");
-            step = 97;
-            return true;
-        }
+        
+        if (input === "1") { step = 1; addMessage("📌 Escolha a especialidade:\n1️⃣ Clínico Geral\n2️⃣ Cardiologia\n3️⃣ Dermatologia\n4️⃣ Pediatria\n\nDigite o número:"); return true; }
+        if (input === "2") { addMessage("🔁 Cancelar consulta\n\nInforme o ID da consulta (ex: PAD-1234):"); step = 99; return true; }
+        if (input === "3") { addMessage("🔄 Remarcar consulta\n\nDigite: ID DD/MM/AAAA HH:MM\nEx: PAD-1001 28/12/2024 09:30"); step = 98; return true; }
+        if (input === "4") { addMessage(formatarListaConsultas()); step = 97; addMessage("Digite 0 para voltar."); return true; }
         if (input === "5") { exibirGerarCupom(); return true; }
-        if (input === "0") { addMessage("📱 <strong>Menu principal:</strong><br><br>1️⃣ Agendar consulta<br>2️⃣ Cancelar agendamento<br>3️⃣ Remarcar consulta<br>4️⃣ Ver minhas consultas<br>5️⃣ 🎁 Gerar cupom"); return true; }
-        addMessage("❌ Opção inválida. Digite 1, 2, 3, 4 ou 5.");
+        if (input === "6") { verCupons(); return true; }
+        if (input === "0") { addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Listar | 5-Cupom | 6-Meus cupons"); return true; }
+        addMessage("Opção inválida. Digite 1,2,3,4,5 ou 6.");
         return true;
     }
-
-    // ==============================================================
-    // CANCELAR E REMARCAR
-    // ==============================================================
-    function processOtherSteps(input) {
+    
+    async function processOtherSteps(input) {
         if (step === 99) {
             const consulta = buscarConsultaPorId(input);
             if (consulta) { 
-                removerConsultaPorId(input);
-                addMessage(`✅ <strong>Consulta cancelada com sucesso!</strong><br><br>ID: ${input}<br>📅 ${consulta.date} - ${consulta.time}<br>🏥 ${consulta.specialty}`);
-            } else { 
-                addMessage(`❌ ID <strong>${input}</strong> não encontrado. Verifique e tente novamente.`); 
-            }
-            step = 0; 
-            addMessage("Menu: 1,2,3,4,5");
+                await removerConsultaPorId(input);
+                addMessage(`✅ Consulta ${input} cancelada com sucesso!`);
+            } else addMessage(`❌ ID ${input} não encontrado.`);
+            step = 0; addMessage("Menu: 1,2,3,4,5,6");
             return true;
         }
         if (step === 98) {
@@ -511,63 +693,59 @@
                 const oldId = parts[0];
                 const newDate = parts[1];
                 const newTime = parts[2];
-                const valDate = /^\d{2}\/\d{2}\/\d{4}$/.test(newDate);
-                const valTime = /^([01]\d|2[0-3]):([0-5]\d)$/.test(newTime);
-                if (valDate && valTime) {
+                if (/^\d{2}\/\d{2}\/\d{4}$/.test(newDate) && /^([01]\d|2[0-3]):([0-5]\d)$/.test(newTime)) {
                     const consultaExistente = buscarConsultaPorId(oldId);
                     if (consultaExistente) {
-                        const specialty = consultaExistente.specialty;
-                        removerConsultaPorId(oldId);
-                        const novoId = gerarIdUnicoNaoDuplicado();
-                        adicionarConsulta(novoId, newDate, newTime, specialty);
-                        addMessage(`✅ <strong>Consulta remarcada com sucesso!</strong><br><br>🔄 Consulta antiga: ${oldId}<br>📌 Nova data: ${newDate} às ${newTime}<br>🏥 ${specialty}<br>🔖 Novo ID: <strong>${novoId}</strong>`);
-                    } else {
-                        addMessage(`❌ ID <strong>${oldId}</strong> não encontrado.`);
-                    }
-                } else {
-                    addMessage("❌ Data ou hora inválida. Use formato: DD/MM/AAAA HH:MM");
-                }
-            } else {
-                addMessage("❌ Formato incorreto.<br><br>Use: <strong>ID DD/MM/AAAA HH:MM</strong><br>Exemplo: PAD-1001 28/12/2024 09:30");
-            }
-            step = 0;
-            addMessage("Menu: 1,2,3,4,5");
+                        await removerConsultaPorId(oldId);
+                        const novoId = await gerarIdUnico();
+                        await adicionarConsulta(novoId, newDate, newTime, consultaExistente.specialty, consultaExistente.cidade, consultaExistente.enderecoCompleto, consultaExistente.linkMapa);
+                        addMessage(`✅ Remarcada! Novo ID: ${novoId} - ${newDate} ${newTime}`);
+                    } else addMessage(`❌ ID ${oldId} não encontrado.`);
+                } else addMessage("Formato inválido. Use DD/MM/AAAA HH:MM");
+            } else addMessage("Formato: ID DD/MM/AAAA HH:MM");
+            step = 0; addMessage("Menu: 1,2,3,4,5,6");
             return true;
         }
-        if (step === 97) {
-            if (input === "0") { step = 0; addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Listar | 5-Cupom"); } 
-            else { addMessage("Digite <strong>0</strong> para voltar ao menu."); }
-            return true;
-        }
+        if (step === 97 && input === "0") { step = 0; addMessage("Menu: 1,2,3,4,5,6"); return true; }
         return false;
     }
-
-    function processUserInput(input) {
-        if (step === 1 || step === 2 || step === 3) { processAgendamento(input); return; }
-        if (step === 99 || step === 98 || step === 97) { if (processOtherSteps(input)) return; }
+    
+    async function processUserInput(input) {
+        if (step === 1 || step === 1.5 || step === 2 || step === 3) { await processAgendamento(input); return; }
+        if (step === 99 || step === 98 || step === 97) { if (await processOtherSteps(input)) return; }
         processGeneralCommand(input);
     }
-
+    
     // ==============================================================
-    // EVENTOS
+    // EVENTOS E INICIALIZAÇÃO
     // ==============================================================
-    document.getElementById('sendBtnWA').onclick = () => {
-        const inp = document.getElementById('chatInputWA');
-        const msg = inp.value.trim();
-        if (!msg) return;
-        addMessage(msg, true);
-        processUserInput(msg);
-        inp.value = '';
-    };
-    document.getElementById('chatInputWA').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('sendBtnWA').click(); });
-    document.getElementById('resetChatWA').onclick = () => {
-        step = 0; 
-        selectedSpecialty = null; 
-        currentSlots = []; 
-        selectedSlot = null;
-        chatContainer.innerHTML = '';
-        addMessage("🏥 <strong>Conversa reiniciada!</strong><br><br>1️⃣ Agendar consulta<br>2️⃣ Cancelar agendamento<br>3️⃣ Remarcar consulta<br>4️⃣ Ver minhas consultas<br>5️⃣ 🎁 Gerar cupom<br><br>Digite o número da opção:");
-    };
+    async function init() {
+        await Promise.all([carregarConsultasDoFirebase(), carregarCuponsDoFirebase()]);
+        
+        document.getElementById('sendBtnWA').onclick = async () => {
+            const inp = document.getElementById('chatInputWA');
+            const msg = inp.value.trim();
+            if (!msg) return;
+            addMessage(msg, true);
+            await processUserInput(msg);
+            inp.value = '';
+        };
+        document.getElementById('chatInputWA').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('sendBtnWA').click(); });
+        document.getElementById('resetChatWA').onclick = async () => {
+            step = 0; selectedSpecialty = null; currentSlots = []; selectedSlot = null; selectedCidade = null; selectedCidadeInfo = null;
+            chatContainer.innerHTML = '';
+            addMessage("🏥 Conversa reiniciada!\n\n1️⃣ Agendar consulta\n2️⃣ Cancelar\n3️⃣ Remarcar\n4️⃣ Ver consultas\n5️⃣ Gerar cupom\n6️⃣ Ver meus cupons\n\nDigite a opção:");
+        };
+        document.getElementById('syncFromFirebase').onclick = async () => {
+            await carregarConsultasDoFirebase();
+            await carregarCuponsDoFirebase();
+            addMessage("🔄 Dados recarregados do servidor! Consultas e cupons sincronizados.", false);
+        };
+        document.getElementById('verCuponsBtn').onclick = async () => {
+            await verCupons();
+        };
+    }
+    init();
 </script>
 </body>
 </html>
