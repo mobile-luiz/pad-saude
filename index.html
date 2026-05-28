@@ -2,8 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>PAD Saúde · Assistente WhatsApp com Firebase</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>PAD Saúde · Assistente WhatsApp</title>
     <!-- Google Fonts + Font Awesome 6 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -11,186 +11,390 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(145deg, #eef2f9 0%, #e2e8f0 100%);
             color: #0b2b2f;
-            padding: 1rem;
+            padding: 12px;
+            min-height: 100vh;
         }
-        .container { max-width: 1000px; margin: 0 auto; }
+        
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            width: 100%;
+        }
+        
         .hero {
             background: radial-gradient(ellipse at 20% 30%, #0f2c31, #063b3a);
-            border-radius: 2rem;
-            padding: 1.8rem;
-            margin-bottom: 1.5rem;
+            border-radius: 20px;
+            padding: 20px 16px;
+            margin-bottom: 16px;
             text-align: center;
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.25);
+            box-shadow: 0 8px 20px -8px rgba(0,0,0,0.25);
         }
+        
         .hero h1 { 
-            font-size: 2.2rem; 
+            font-size: clamp(1.4rem, 5vw, 2rem); 
             font-weight: 800; 
             background: linear-gradient(125deg, #FFF, #B2F0EA, #7FDDD5); 
             -webkit-background-clip: text; 
             background-clip: text; 
             color: transparent; 
-            margin-bottom: 0.5rem; 
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
+        
         .hero p { 
             color: #CAF0EC; 
-            margin-top: 0.3rem; 
-            font-size: 1rem; 
+            margin-top: 4px; 
+            font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+            line-height: 1.4;
         }
+        
         .badge-dual { 
             display: inline-flex; 
-            background: rgba(255,255,255,0.1); 
+            background: rgba(255,255,255,0.12); 
             backdrop-filter: blur(10px); 
-            padding: 0.5rem 1.2rem; 
+            padding: 8px 16px; 
             border-radius: 50px; 
-            font-size: 0.85rem; 
-            margin-top: 0.8rem; 
-            gap: 1rem; 
+            font-size: clamp(0.7rem, 3vw, 0.8rem); 
+            margin-top: 12px; 
+            gap: 12px; 
             color: #e0f3f0; 
             flex-wrap: wrap;
             justify-content: center;
         }
+        
+        .badge-dual i {
+            font-size: clamp(0.7rem, 3vw, 0.8rem);
+        }
+        
         .card { 
             background: rgba(255,255,255,0.98); 
-            border-radius: 2rem; 
+            border-radius: 24px; 
             overflow: hidden; 
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1); 
-            border: 1px solid rgba(255,255,255,0.6); 
+            box-shadow: 0 8px 24px -12px rgba(0,0,0,0.15); 
+            border: 1px solid rgba(255,255,255,0.6);
         }
+        
         .card-header { 
             display: flex; 
             align-items: center; 
             justify-content: space-between;
-            padding: 1.2rem 1.5rem 0.8rem 1.5rem; 
+            padding: 16px;
             border-bottom: 2px solid #eef3f8; 
             flex-wrap: wrap;
+            gap: 12px;
         }
-        .card-header-left { display: flex; align-items: center; gap: 12px; }
+        
+        .card-header-left { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
         .card-header i { 
-            font-size: 1.6rem; 
+            font-size: 1.4rem; 
             color: #146b65; 
             background: #e0f3f1; 
-            padding: 10px; 
-            border-radius: 1rem; 
+            padding: 8px; 
+            border-radius: 12px; 
         }
-        .card-header h3 { font-weight: 700; font-size: 1.3rem; }
+        
+        .card-header h3 { 
+            font-weight: 700; 
+            font-size: clamp(1rem, 4vw, 1.2rem);
+        }
+        
         .date-hint { 
             background: #eef3fa; 
-            border-radius: 1rem; 
-            padding: 8px 16px; 
-            margin: 0.8rem 1.5rem 1rem 1.5rem; 
-            font-size: 0.85rem; 
+            border-radius: 12px; 
+            padding: 10px 12px; 
+            margin: 12px;
+            font-size: clamp(0.7rem, 3vw, 0.8rem); 
             color: #146b65; 
             display: flex; 
             align-items: center; 
             gap: 8px; 
             flex-wrap: wrap;
         }
+        
+        .date-hint i {
+            font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+        }
+        
         .whatsapp-simulator { 
             background: #f5f9fe; 
-            border-radius: 1.5rem; 
+            border-radius: 20px; 
             overflow: hidden; 
-            margin: 0 1.5rem 1rem 1.5rem; 
-            border: 1px solid #e2edf2; 
+            margin: 12px;
+            border: 1px solid #e2edf2;
         }
+        
         .chat-header { 
             background: linear-gradient(98deg, #075e54, #0a6b60); 
             color: white; 
-            padding: 0.8rem 1.2rem; 
+            padding: 12px 14px; 
             display: flex; 
             align-items: center; 
-            gap: 10px; 
-            font-size: 1rem; 
+            gap: 8px; 
+            font-size: clamp(0.85rem, 3.5vw, 0.95rem);
         }
+        
         .chat-messages { 
-            height: 450px; 
+            height: 60vh;
+            max-height: 500px;
+            min-height: 400px;
             overflow-y: auto; 
-            padding: 1rem; 
+            padding: 12px; 
             background: #eef2f5; 
             display: flex; 
             flex-direction: column; 
-            gap: 8px; 
+            gap: 8px;
+            -webkit-overflow-scrolling: touch;
         }
+        
         .message-bubble { 
             max-width: 85%; 
             padding: 10px 14px; 
-            border-radius: 1.2rem; 
-            font-size: 0.9rem; 
+            border-radius: 18px; 
+            font-size: clamp(0.8rem, 3.5vw, 0.88rem); 
             font-weight: 500; 
             word-break: break-word; 
             line-height: 1.45;
         }
+        
         .message-bot .message-bubble { 
             background: white; 
-            border-radius: 1.2rem 1.2rem 1.2rem 0.3rem; 
-            font-size: 0.92rem;
+            border-radius: 18px 18px 18px 4px; 
         }
+        
         .message-user .message-bubble { 
             background: #dcf8c5; 
-            border-radius: 1.2rem 1.2rem 0.3rem 1.2rem; 
-            font-size: 0.92rem;
+            border-radius: 18px 18px 4px 18px; 
         }
+        
         .input-area { 
             display: flex; 
-            gap: 10px; 
-            padding: 12px 15px; 
+            gap: 8px; 
+            padding: 12px; 
             background: white; 
             border-top: 1px solid #e0eaf0; 
         }
+        
         .input-area input { 
             flex: 1; 
-            border-radius: 2rem; 
+            border-radius: 30px; 
             border: 1px solid #ccdbe5; 
             padding: 12px 16px; 
             font-family: 'Inter'; 
-            font-size: 0.9rem;
+            font-size: 16px;
             outline: none;
+            background: white;
+            -webkit-appearance: none;
         }
-        .input-area input:focus { border-color: #1b7e79; box-shadow: 0 0 0 2px rgba(27,126,121,0.1); }
+        
+        .input-area input:focus { 
+            border-color: #1b7e79; 
+            box-shadow: 0 0 0 2px rgba(27,126,121,0.1); 
+        }
+        
+        .input-area input::placeholder {
+            font-size: clamp(0.8rem, 3.5vw, 0.85rem);
+        }
+        
         .btn-primary { 
             background: linear-gradient(100deg, #146b65, #0e5954); 
             color: white; 
             border: none; 
-            padding: 0 1.5rem; 
-            border-radius: 2rem; 
+            padding: 0 20px; 
+            border-radius: 30px; 
             font-weight: 600; 
             cursor: pointer; 
             transition: 0.2s; 
-            font-size: 0.9rem;
+            font-size: clamp(0.8rem, 3.5vw, 0.9rem);
             display: flex;
             align-items: center;
             gap: 6px;
+            white-space: nowrap;
         }
-        .btn-primary:hover { transform: scale(0.97); }
+        
+        .btn-primary:active { 
+            transform: scale(0.96); 
+        }
+        
         .btn-secondary { 
             background: white; 
             border: 1.5px solid #146b65; 
             color: #146b65; 
-            padding: 8px 18px; 
-            border-radius: 2rem; 
+            padding: 10px 20px; 
+            border-radius: 30px; 
             font-weight: 600; 
             cursor: pointer; 
-            font-size: 0.85rem;
+            font-size: clamp(0.8rem, 3.5vw, 0.85rem);
             display: flex;
             align-items: center;
             gap: 8px;
             transition: 0.2s;
+            white-space: nowrap;
         }
-        .btn-secondary:hover { background: #146b65; color: white; }
-        .reset-btn-container { display: flex; justify-content: center; gap: 12px; margin: 1rem 1.5rem 1.2rem 1.5rem; flex-wrap: wrap; }
-        .footer { margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: #5f8a86; padding: 1rem; border-top: 1px solid rgba(27,94,87,0.15); }
-        @media (max-width: 700px) { 
-            .chat-messages { height: 420px; } 
-            .hero h1 { font-size: 1.8rem; }
-            .card-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+        
+        .btn-secondary:active { 
+            background: #146b65; 
+            color: white;
+            transform: scale(0.96);
         }
-        .id-badge-chat { background: #eef3fa; padding: 3px 8px; border-radius: 20px; font-family: monospace; font-size: 0.75rem; font-weight: 700; color: #0e5954; display: inline-block; }
-        .info-box { background: #e8f4f1; border-left: 4px solid #1b7e79; padding: 10px 12px; margin: 8px 0; border-radius: 10px; font-size: 0.85rem; }
-        .unidade-detail { background: #f0f7fa; border-radius: 12px; padding: 10px 12px; margin-top: 8px; font-size: 0.85rem; border-left: 3px solid #146b65; }
+        
+        .reset-btn-container { 
+            display: flex; 
+            justify-content: center; 
+            gap: 12px; 
+            margin: 16px 12px 20px 12px; 
+            flex-wrap: wrap; 
+        }
+        
+        .footer { 
+            margin-top: 20px; 
+            text-align: center; 
+            font-size: clamp(0.65rem, 3vw, 0.75rem); 
+            color: #5f8a86; 
+            padding: 16px 12px; 
+            border-top: 1px solid rgba(27,94,87,0.15);
+        }
+        
+        /* Estilos específicos para mobile */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+            
+            .hero {
+                padding: 16px 12px;
+                border-radius: 18px;
+            }
+            
+            .card-header {
+                padding: 14px;
+            }
+            
+            .chat-messages {
+                height: 55vh;
+                min-height: 350px;
+            }
+            
+            .message-bubble {
+                max-width: 90%;
+                padding: 8px 12px;
+            }
+            
+            .input-area {
+                padding: 10px;
+            }
+            
+            .input-area input {
+                padding: 10px 14px;
+            }
+            
+            .btn-primary, .btn-secondary {
+                padding: 8px 16px;
+            }
+            
+            .reset-btn-container {
+                gap: 10px;
+                margin: 12px 12px 16px 12px;
+            }
+        }
+        
+        @media (max-width: 380px) {
+            .btn-primary, .btn-secondary {
+                padding: 8px 14px;
+                font-size: 0.75rem;
+            }
+            
+            .btn-primary i, .btn-secondary i {
+                font-size: 0.75rem;
+            }
+            
+            .reset-btn-container {
+                flex-direction: column;
+            }
+            
+            .btn-secondary {
+                justify-content: center;
+            }
+        }
+        
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 320px) {
+            .hero h1 {
+                font-size: 1.3rem;
+            }
+            
+            .badge-dual {
+                padding: 6px 12px;
+                gap: 8px;
+            }
+            
+            .chat-messages {
+                height: 50vh;
+                min-height: 300px;
+            }
+        }
+        
+        /* Landscape mode */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .chat-messages {
+                height: 45vh;
+                min-height: 250px;
+            }
+            
+            .hero {
+                padding: 10px 12px;
+                margin-bottom: 10px;
+            }
+            
+            .hero h1 {
+                font-size: 1.2rem;
+            }
+            
+            .reset-btn-container {
+                margin: 8px 12px;
+            }
+        }
+        
+        .id-badge-chat { 
+            background: #eef3fa; 
+            padding: 3px 8px; 
+            border-radius: 20px; 
+            font-family: monospace; 
+            font-size: 0.7rem; 
+            font-weight: 700; 
+            color: #0e5954; 
+            display: inline-block; 
+        }
+        
+        .info-box { 
+            background: #e8f4f1; 
+            border-left: 4px solid #1b7e79; 
+            padding: 10px 12px; 
+            margin: 8px 0; 
+            border-radius: 10px; 
+            font-size: clamp(0.75rem, 3.5vw, 0.85rem); 
+        }
+        
         .btn-mapa { 
             display: inline-flex; 
             align-items: center; 
@@ -200,25 +404,80 @@
             padding: 6px 12px; 
             border-radius: 25px; 
             text-decoration: none; 
-            font-size: 0.75rem; 
+            font-size: 0.7rem; 
             font-weight: 600;
             margin-top: 8px;
             transition: 0.2s;
         }
-        .btn-mapa:hover { background: #3367D6; transform: scale(1.02); }
-        .sync-badge { background: #25D366; color: white; border-radius: 20px; padding: 4px 12px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 5px; }
-        .cupom-stats { background: linear-gradient(135deg, #f5f0e6, #faf5e8); border-radius: 12px; padding: 6px 12px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 8px; margin-left: 10px; }
+        
+        .btn-mapa:active { 
+            background: #3367D6; 
+            transform: scale(0.98);
+        }
+        
+        .btn-exames {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: clamp(0.8rem, 3.5vw, 0.85rem);
+            margin: 10px 0;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+        }
+        
+        .btn-exames:active { 
+            transform: scale(0.98); 
+        }
+        
+        .exames-card {
+            background: linear-gradient(135deg, #f5f0ff 0%, #faf5ff 100%);
+            border-radius: 16px;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #d8c4ff;
+            text-align: center;
+        }
+        
+        /* Melhorias de scroll */
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: #e0eaf0;
+            border-radius: 4px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #146b65;
+            border-radius: 4px;
+        }
+        
+        /* Ajuste para inputs em mobile evitando zoom */
+        input, button, .btn-primary, .btn-secondary {
+            font-size: 16px;
+        }
+        
+        /* Melhorias de toque */
+        button, .btn-primary, .btn-secondary, a {
+            cursor: pointer;
+            touch-action: manipulation;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="hero">
         <h1><i class="fab fa-whatsapp"></i> PAD Saúde</h1>
-        <p>Agende, cancele ou remaneje suas consultas • Cupons salvos em nuvem</p>
+        <p>Agende, cancele ou remaneje suas consultas</p>
         <div class="badge-dual">
-            <i class="fas fa-map-marker-alt"></i> Caruaru • Recife 
-            &nbsp;•&nbsp; <i class="fas fa-ticket-alt"></i> Cupom 20% OFF 
-            &nbsp;•&nbsp; <i class="fas fa-database"></i> Dados + Cupons salvos
+            <i class="fas fa-map-marker-alt"></i> Caruaru • Recife
         </div>
     </div>
 
@@ -228,31 +487,25 @@
                 <i class="fab fa-whatsapp"></i>
                 <h3>Central de Atendimento</h3>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <div class="cupom-stats" id="cupomStats"><i class="fas fa-ticket-alt"></i> <span id="cupomCount">0</span> cupons gerados</div>
-                <div class="sync-badge" id="syncStatus"><i class="fas fa-cloud-upload-alt"></i> Sincronizado</div>
-            </div>
         </div>
         <div class="date-hint">
             <i class="fas fa-info-circle"></i> 
-            <strong>💡 Dica:</strong> Digite <strong style="background:#146b65; color:white; padding:2px 8px; border-radius:20px;">5</strong> para gerar cupom • Os cupons são salvos no Firebase com data e hora
+            <strong>💡 Dica:</strong> Digite <strong style="background:#146b65; color:white; padding:4px 10px; border-radius:20px; font-size:0.7rem;">5</strong> para gerar cupom • <strong style="background:#146b65; color:white; padding:4px 10px; border-radius:20px; font-size:0.7rem;">7</strong> para consultar exames
         </div>
         
         <div class="whatsapp-simulator">
             <div class="chat-header"><i class="fab fa-whatsapp"></i> <span><strong>Atendente virtual PAD</strong> • Online</span></div>
             <div class="chat-messages" id="chatMessagesWA">
-                <div class="message-bot"><div class="message-bubble">🏥 <strong>Olá! Bem-vindo à PAD Saúde.</strong><br><br>1️⃣ Agendar consulta<br>2️⃣ Cancelar agendamento<br>3️⃣ Remarcar consulta<br>4️⃣ Ver minhas consultas<br>5️⃣ 🎁 Gerar cupom<br>6️⃣ 📊 Ver meus cupons<br><br>Digite o número da opção:</div></div>
+                <div class="message-bot"><div class="message-bubble">🏥 <strong>Olá! Bem-vindo à PAD Saúde.</strong><br><br>1️⃣ Agendar consulta<br>2️⃣ Cancelar agendamento<br>3️⃣ Remarcar consulta<br>4️⃣ Ver minhas consultas<br>5️⃣ 🎁 Gerar cupom<br>6️⃣ 📊 Ver meus cupons<br>7️⃣ 🔬 Consultar meus exames<br><br>Digite o número da opção:</div></div>
             </div>
             <div class="input-area">
-                <input type="text" id="chatInputWA" placeholder="Digite sua mensagem..." autocomplete="off">
+                <input type="text" id="chatInputWA" placeholder="Digite sua mensagem..." autocomplete="off" enterkeyhint="send">
                 <button id="sendBtnWA" class="btn-primary"><i class="fab fa-whatsapp"></i> Enviar</button>
             </div>
         </div>
         
         <div class="reset-btn-container">
             <button id="resetChatWA" class="btn-secondary"><i class="fas fa-sync-alt"></i> Nova conversa</button>
-            <button id="syncFromFirebase" class="btn-secondary"><i class="fas fa-cloud-download-alt"></i> Carregar dados</button>
-            <button id="verCuponsBtn" class="btn-secondary"><i class="fas fa-ticket-alt"></i> Ver meus cupons</button>
         </div>
     </div>
     
@@ -309,9 +562,10 @@
         }
     };
     
-    // Estado da aplicação
+    const LINK_EXAMES = "https://padsaude.com.br/";
+    
     let consultas = [];
-    let cupons = []; // Array para armazenar cupons gerados nesta sessão
+    let cupons = [];
     let step = 0;
     let selectedSpecialty = null;
     let currentSlots = [];
@@ -320,23 +574,7 @@
     let selectedCidadeInfo = null;
     
     const chatContainer = document.getElementById('chatMessagesWA');
-    const syncStatusSpan = document.getElementById('syncStatus');
-    const cupomCountSpan = document.getElementById('cupomCount');
     
-    function updateSyncStatus(saving = false, error = false) {
-        if (saving) syncStatusSpan.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Salvando...';
-        else if (error) syncStatusSpan.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erro sync';
-        else syncStatusSpan.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Sincronizado';
-        setTimeout(() => {
-            if (!saving) syncStatusSpan.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Sincronizado';
-        }, 1500);
-    }
-    
-    function updateCupomCount() {
-        cupomCountSpan.innerText = cupons.length;
-    }
-    
-    // Gerar ID único para consultas
     async function gerarIdUnico() {
         const snapshot = await consultasRef.once('value');
         const todasConsultas = snapshot.val();
@@ -353,9 +591,7 @@
         return `PAD-${novoNum}`;
     }
     
-    // Salvar consultas no Firebase
     async function salvarConsultasNoFirebase() {
-        updateSyncStatus(true, false);
         try {
             const consultasObj = {};
             consultas.forEach(cons => {
@@ -371,14 +607,11 @@
                 };
             });
             await consultasRef.set(consultasObj);
-            updateSyncStatus(false, false);
         } catch (error) {
             console.error('Erro ao salvar consultas:', error);
-            updateSyncStatus(false, true);
         }
     }
     
-    // Salvar cupom no Firebase
     async function salvarCupomNoFirebase(cupom) {
         try {
             const cupomRef = cuponsRef.push();
@@ -395,7 +628,6 @@
         }
     }
     
-    // Carregar cupons do Firebase
     async function carregarCuponsDoFirebase() {
         try {
             const snapshot = await cuponsRef.once('value');
@@ -408,7 +640,6 @@
                     utilizado: cup.utilizado || false,
                     compartilhado: cup.compartilhado || false
                 }));
-                updateCupomCount();
                 console.log(`📥 Carregados ${cupons.length} cupons do Firebase`);
             }
         } catch (error) {
@@ -416,9 +647,7 @@
         }
     }
     
-    // Carregar consultas do Firebase
     async function carregarConsultasDoFirebase() {
-        updateSyncStatus(true, false);
         try {
             const snapshot = await consultasRef.once('value');
             const data = snapshot.val();
@@ -440,17 +669,15 @@
                 ];
                 await salvarConsultasNoFirebase();
             }
-            updateSyncStatus(false, false);
             return true;
         } catch (error) {
             console.error('Erro ao carregar consultas:', error);
-            updateSyncStatus(false, true);
             return false;
         }
     }
     
     function formatarComLinkMapa(endereco, linkMapa) {
-        return `${endereco}<br><a href="${linkMapa}" target="_blank" class="btn-mapa"><i class="fas fa-map-marker-alt"></i> 📍 Como chegar (Abrir mapa)</a>`;
+        return `${endereco}<br><a href="${linkMapa}" target="_blank" class="btn-mapa"><i class="fas fa-map-marker-alt"></i> 📍 Como chegar</a>`;
     }
     
     async function adicionarConsulta(id, date, time, specialty, cidadeNome, enderecoCompleto, linkMapa) {
@@ -515,9 +742,9 @@
             lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br>`;
             lista += `   📍 ${c.cidade || "Cidade não informada"}<br>`;
             if (c.enderecoCompleto) {
-                lista += `   🏥 ${c.enderecoCompleto}<br>`;
+                lista += `   🏥 ${c.enderecoCompleto.substring(0, 40)}${c.enderecoCompleto.length > 40 ? '...' : ''}<br>`;
                 if (c.linkMapa) {
-                    lista += `   <a href="${c.linkMapa}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; background:#e8f0fe; padding:3px 10px; border-radius:20px; font-size:0.7rem; color:#1a73e8; text-decoration:none; margin-top:5px;"><i class="fas fa-map-marker-alt"></i> Como chegar (mapa)</a><br>`;
+                    lista += `   <a href="${c.linkMapa}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; background:#e8f0fe; padding:3px 10px; border-radius:20px; font-size:0.65rem; color:#1a73e8; text-decoration:none; margin-top:5px;"><i class="fas fa-map-marker-alt"></i> Ver mapa</a><br>`;
                 }
             }
             lista += `<br>`;
@@ -528,19 +755,37 @@
     
     function formatarListaCupons() {
         if (cupons.length === 0) return "📭 Nenhum cupom gerado ainda. Digite 5 para gerar seu primeiro cupom!";
-        let lista = "🎫 <strong>SEUS CUPONS DE DESCONTO:</strong><br><br>";
+        let lista = "🎫 <strong>SEUS CUPONS:</strong><br><br>";
         cupons.forEach((cup, idx) => {
             const dataFormatada = cup.dataGeracao ? new Date(cup.dataGeracao).toLocaleString('pt-BR') : 'Data desconhecida';
-            lista += `${idx+1}️⃣ <strong style="font-size:1rem; background:#f0f7f5; padding:4px 10px; border-radius:12px;">${cup.codigo}</strong><br>`;
-            lista += `   📅 Gerado em: ${dataFormatada}<br>`;
-            lista += `   💰 Desconto: ${cup.desconto}<br>`;
-            lista += `   ${cup.utilizado ? '❌ Já utilizado' : '✅ Disponível para uso'}<br><br>`;
+            lista += `${idx+1}️⃣ <strong style="font-size:0.9rem; background:#f0f7f5; padding:4px 8px; border-radius:12px;">${cup.codigo}</strong><br>`;
+            lista += `   📅 ${dataFormatada}<br>`;
+            lista += `   💰 ${cup.desconto}<br>`;
+            lista += `   ${cup.utilizado ? '❌ Usado' : '✅ Disponível'}<br><br>`;
         });
-        lista += "💡 Apresente o código na hora do agendamento para ganhar 20% OFF!";
+        lista += "💡 Apresente o código no agendamento para 20% OFF!";
         return lista;
     }
     
-    // Gerar cupom e salvar no Firebase
+    function consultarExames() {
+        const mensagemExames = `
+            <div class="exames-card">
+                🔬 <strong>RESULTADOS DE EXAMES</strong> 🔬<br><br>
+                <a href="${LINK_EXAMES}" target="_blank" class="btn-exames">
+                    <i class="fas fa-flask"></i> Acessar Portal
+                    <i class="fas fa-external-link-alt"></i>
+                </a><br><br>
+                <div class="info-box">
+                    📌 Use CPF e data de nascimento<br>
+                    📱 Disponível 24/7
+                </div>
+            </div>
+        `;
+        addMessage(mensagemExames);
+        addMessage("Digite 0 para voltar ao menu.");
+        step = 50;
+    }
+    
     function gerarCupomUnico() {
         const prefixo = "PAD";
         const numeros = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
@@ -564,25 +809,18 @@
         
         cupons.push(novoCupom);
         await salvarCupomNoFirebase(novoCupom);
-        updateCupomCount();
         
-        const mensagemWhatsApp = `🏥 *PAD SAÚDE - CUPOM EXCLUSIVO!* 🎉\n\n*${cupomGerado}*\n\n✅ *20% OFF* na sua primeira consulta!\n📅 *Gerado em:* ${new Date(dataAtual).toLocaleString('pt-BR')}\n\n🔹 *Como funciona?*\n• Agende pelo WhatsApp\n• Apresente o cupom no agendamento\n• Desconto aplicado automaticamente\n\n📅 *Agende:* ${LINK_CARTAO}`;
+        const mensagemWhatsApp = `🏥 *PAD SAÚDE - CUPOM!* 🎉\n\n*${cupomGerado}*\n\n✅ *20% OFF* na primeira consulta!\n📅 *${new Date(dataAtual).toLocaleString('pt-BR')}*`;
         const whatsappLink = `https://wa.me/?text=${encodeURIComponent(mensagemWhatsApp)}`;
         
         const msgCupom = `
-            🎫 <strong>🎁 CUPOM DE DESCONTO GERADO!</strong><br><br>
-            🔖 <strong style="font-size:1.5rem; background:#f0f7f5; padding:10px 16px; border-radius:12px; display:inline-block;">${cupomGerado}</strong><br><br>
+            🎫 <strong>🎁 CUPOM GERADO!</strong><br><br>
+            🔖 <strong style="font-size:1.2rem; background:#f0f7f5; padding:8px 12px; border-radius:12px;">${cupomGerado}</strong><br><br>
             <div class="info-box">
-            📌 <strong>✨ ${novoCupom.desconto}</strong><br>
-            • Gerado em: ${new Date(dataAtual).toLocaleString('pt-BR')}<br>
-            • Qualquer especialidade médica<br>
-            • Válido para todas as unidades (Caruaru/Recife)<br>
-            • Apresente no momento do agendamento
+            ✨ ${novoCupom.desconto}<br>
+            📅 ${new Date(dataAtual).toLocaleString('pt-BR')}
             </div>
-            
-            👉 <a href="${whatsappLink}" target="_blank" style="background:#25D366; color:white; padding:8px 18px; border-radius:40px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; margin:10px 0;"><i class="fab fa-whatsapp"></i> Compartilhar cupom</a><br><br>
-            ✨ Total de cupons gerados: <strong>${cupons.length}</strong><br>
-            💾 Cupom salvo no Firebase com timestamp!
+            👉 <a href="${whatsappLink}" target="_blank" style="background:#25D366; color:white; padding:8px 16px; border-radius:40px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; margin:8px 0; font-size:0.8rem;"><i class="fab fa-whatsapp"></i> Compartilhar</a>
         `;
         addMessage(msgCupom);
         step = 5;
@@ -591,19 +829,18 @@
     async function verCupons() {
         await carregarCuponsDoFirebase();
         addMessage(formatarListaCupons());
-        addMessage("Digite 0 para voltar ao menu.");
+        addMessage("Digite 0 para voltar.");
         step = 50;
     }
     
-    // Fluxo de agendamento
     async function processAgendamento(input) {
         if (step === 1) {
             const espMap = { "1": "Clínico Geral", "2": "Cardiologia", "3": "Dermatologia", "4": "Pediatria" };
             if (espMap[input]) {
                 selectedSpecialty = espMap[input];
                 step = 1.5;
-                addMessage(`✅ Especialidade selecionada: <strong>${selectedSpecialty}</strong>.`);
-                addMessage(`📍 <strong>Agora escolha a unidade/cidade:</strong><br><br>1️⃣ Caruaru-PE (Clínica PAD Saúde + Cartão)<br>2️⃣ Recife-PE (Madalena - Clínica PAD Saúde)<br>3️⃣ Recife-PE (Home Care)<br><br>Digite o número da unidade desejada:`);
+                addMessage(`✅ Especialidade: <strong>${selectedSpecialty}</strong>.`);
+                addMessage(`📍 <strong>Escolha a unidade:</strong><br><br>1️⃣ Caruaru-PE<br>2️⃣ Recife-PE (Madalena)<br>3️⃣ Recife-PE (Home Care)<br><br>Digite o número:`);
             } else addMessage("Opção inválida. Escolha 1-4.");
             return;
         }
@@ -614,15 +851,15 @@
                 selectedCidade = selectedCidadeInfo.nome;
                 currentSlots = getAvailableSlots(selectedSpecialty);
                 if (currentSlots.length === 0) {
-                    addMessage(`😓 Sem horários disponíveis para ${selectedSpecialty} em ${selectedCidade}.`);
+                    addMessage(`😓 Sem horários para ${selectedSpecialty} em ${selectedCidade}.`);
                     step = 0;
-                    addMessage("Menu: 1,2,3,4,5,6");
+                    addMessage("Menu: 1,2,3,4,5,6,7");
                     return;
                 }
                 step = 2;
                 const linkMapa = gerarLinkMapa(selectedCidadeInfo.enderecoCompleto);
                 const enderecoFormatado = formatarComLinkMapa(selectedCidadeInfo.enderecoCompleto, linkMapa);
-                addMessage(`📍 <strong>Unidade escolhida:</strong> ${selectedCidadeInfo.nome}<br>📌 ${selectedCidadeInfo.endereco}<br>📋 ${selectedCidadeInfo.complemento}<br>${enderecoFormatado}`);
+                addMessage(`📍 ${selectedCidadeInfo.nome}<br>📌 ${selectedCidadeInfo.endereco}<br>${enderecoFormatado}`);
                 addMessage(formatSlotsList(currentSlots));
             } else addMessage("Opção inválida. Escolha 1, 2 ou 3.");
             return;
@@ -643,14 +880,14 @@
                 const linkMapa = gerarLinkMapa(enderecoCompleto);
                 await adicionarConsulta(novoId, selectedSlot.date, selectedSlot.time, selectedSpecialty, selectedCidade, enderecoCompleto, linkMapa);
                 const enderecoFormatado = formatarComLinkMapa(enderecoCompleto, linkMapa);
-                addMessage(`✅ <strong>CONSULTA AGENDADA COM SUCESSO!</strong><br><br>📍 <strong>${selectedCidade}</strong><br>📌 ${selectedSlot.date} às ${selectedSlot.time}<br>🔬 ${selectedSpecialty}<br>🔖 <span class="id-badge-chat">ID: ${novoId}</span><br><br>🏥 <strong>Endereço da unidade:</strong><br>${enderecoFormatado}<br><br>💡 Guarde este ID para cancelamentos ou remarcações.`);
+                addMessage(`✅ <strong>CONSULTA AGENDADA!</strong><br><br>📍 ${selectedCidade}<br>📌 ${selectedSlot.date} às ${selectedSlot.time}<br>🔬 ${selectedSpecialty}<br>🔖 ID: ${novoId}<br><br>🏥 Endereço:<br>${enderecoFormatado}`);
                 step = 0;
                 selectedSpecialty = null; currentSlots = []; selectedSlot = null; selectedCidade = null; selectedCidadeInfo = null;
-                addMessage("Menu principal: 1,2,3,4,5,6");
+                addMessage("Menu: 1,2,3,4,5,6,7");
             } else if (input.toLowerCase() === "cancelar") {
                 addMessage("❌ Agendamento cancelado.");
                 step = 0;
-                addMessage("Menu: 1,2,3,4,5,6");
+                addMessage("Menu: 1,2,3,4,5,6,7");
             } else addMessage("Responda SIM ou CANCELAR.");
             return;
         }
@@ -660,20 +897,21 @@
         if (step !== 0 && step !== 5 && step !== 50) return false;
         
         if (step === 5 || step === 50) {
-            if (input === "0") { step = 0; addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Listar | 5-Cupom | 6-Meus cupons"); }
-            else if (step === 50) addMessage("Digite 0 para voltar ao menu.");
-            else addMessage("Digite 0 para voltar ao menu.");
+            if (input === "0") { step = 0; addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Listar | 5-Cupom | 6-Meus cupons | 7-Exames"); }
+            else if (step === 50) addMessage("Digite 0 para voltar.");
+            else addMessage("Digite 0 para voltar.");
             return true;
         }
         
-        if (input === "1") { step = 1; addMessage("📌 Escolha a especialidade:\n1️⃣ Clínico Geral\n2️⃣ Cardiologia\n3️⃣ Dermatologia\n4️⃣ Pediatria\n\nDigite o número:"); return true; }
-        if (input === "2") { addMessage("🔁 Cancelar consulta\n\nInforme o ID da consulta (ex: PAD-1234):"); step = 99; return true; }
+        if (input === "1") { step = 1; addMessage("📌 Especialidade:\n1️⃣ Clínico Geral\n2️⃣ Cardiologia\n3️⃣ Dermatologia\n4️⃣ Pediatria\n\nDigite o número:"); return true; }
+        if (input === "2") { addMessage("🔁 Cancelar consulta\n\nInforme o ID (ex: PAD-1234):"); step = 99; return true; }
         if (input === "3") { addMessage("🔄 Remarcar consulta\n\nDigite: ID DD/MM/AAAA HH:MM\nEx: PAD-1001 28/12/2024 09:30"); step = 98; return true; }
         if (input === "4") { addMessage(formatarListaConsultas()); step = 97; addMessage("Digite 0 para voltar."); return true; }
         if (input === "5") { exibirGerarCupom(); return true; }
         if (input === "6") { verCupons(); return true; }
-        if (input === "0") { addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Listar | 5-Cupom | 6-Meus cupons"); return true; }
-        addMessage("Opção inválida. Digite 1,2,3,4,5 ou 6.");
+        if (input === "7") { consultarExames(); return true; }
+        if (input === "0") { addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Listar | 5-Cupom | 6-Meus cupons | 7-Exames"); return true; }
+        addMessage("Opção inválida. Digite 1,2,3,4,5,6 ou 7.");
         return true;
     }
     
@@ -682,9 +920,9 @@
             const consulta = buscarConsultaPorId(input);
             if (consulta) { 
                 await removerConsultaPorId(input);
-                addMessage(`✅ Consulta ${input} cancelada com sucesso!`);
+                addMessage(`✅ Consulta ${input} cancelada!`);
             } else addMessage(`❌ ID ${input} não encontrado.`);
-            step = 0; addMessage("Menu: 1,2,3,4,5,6");
+            step = 0; addMessage("Menu: 1,2,3,4,5,6,7");
             return true;
         }
         if (step === 98) {
@@ -703,10 +941,10 @@
                     } else addMessage(`❌ ID ${oldId} não encontrado.`);
                 } else addMessage("Formato inválido. Use DD/MM/AAAA HH:MM");
             } else addMessage("Formato: ID DD/MM/AAAA HH:MM");
-            step = 0; addMessage("Menu: 1,2,3,4,5,6");
+            step = 0; addMessage("Menu: 1,2,3,4,5,6,7");
             return true;
         }
-        if (step === 97 && input === "0") { step = 0; addMessage("Menu: 1,2,3,4,5,6"); return true; }
+        if (step === 97 && input === "0") { step = 0; addMessage("Menu: 1,2,3,4,5,6,7"); return true; }
         return false;
     }
     
@@ -716,33 +954,29 @@
         processGeneralCommand(input);
     }
     
-    // ==============================================================
-    // EVENTOS E INICIALIZAÇÃO
-    // ==============================================================
     async function init() {
         await Promise.all([carregarConsultasDoFirebase(), carregarCuponsDoFirebase()]);
         
-        document.getElementById('sendBtnWA').onclick = async () => {
-            const inp = document.getElementById('chatInputWA');
-            const msg = inp.value.trim();
+        const sendBtn = document.getElementById('sendBtnWA');
+        const inputField = document.getElementById('chatInputWA');
+        
+        sendBtn.onclick = async () => {
+            const msg = inputField.value.trim();
             if (!msg) return;
             addMessage(msg, true);
             await processUserInput(msg);
-            inp.value = '';
+            inputField.value = '';
+            inputField.focus();
         };
-        document.getElementById('chatInputWA').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('sendBtnWA').click(); });
+        
+        inputField.addEventListener('keypress', (e) => { 
+            if (e.key === 'Enter') sendBtn.click(); 
+        });
+        
         document.getElementById('resetChatWA').onclick = async () => {
             step = 0; selectedSpecialty = null; currentSlots = []; selectedSlot = null; selectedCidade = null; selectedCidadeInfo = null;
             chatContainer.innerHTML = '';
-            addMessage("🏥 Conversa reiniciada!\n\n1️⃣ Agendar consulta\n2️⃣ Cancelar\n3️⃣ Remarcar\n4️⃣ Ver consultas\n5️⃣ Gerar cupom\n6️⃣ Ver meus cupons\n\nDigite a opção:");
-        };
-        document.getElementById('syncFromFirebase').onclick = async () => {
-            await carregarConsultasDoFirebase();
-            await carregarCuponsDoFirebase();
-            addMessage("🔄 Dados recarregados do servidor! Consultas e cupons sincronizados.", false);
-        };
-        document.getElementById('verCuponsBtn').onclick = async () => {
-            await verCupons();
+            addMessage("🏥 Conversa reiniciada!\n\n1️⃣ Agendar\n2️⃣ Cancelar\n3️⃣ Remarcar\n4️⃣ Ver consultas\n5️⃣ Gerar cupom\n6️⃣ Ver cupons\n7️⃣ Exames\n\nDigite a opção:");
         };
     }
     init();
