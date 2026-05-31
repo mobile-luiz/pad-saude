@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     
-    <!-- ============================================= -->
-    <!-- GOOGLE ANALYTICS 4 (GA4) - CÓDIGO DE RASTREAMENTO -->
-    <!-- ============================================= -->
+    <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L4J1JWSQCX"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -18,13 +16,10 @@
             'send_page_view': true
         });
     </script>
-    <!-- ============================================= -->
     
     <title>PAD Saúde · Assistente WhatsApp</title>
-    <!-- Google Fonts + Font Awesome 6 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
@@ -292,7 +287,6 @@
             border-top: 1px solid rgba(27,94,87,0.15);
         }
         
-        /* Estilos para status */
         .status-agendado {
             color: #10b981;
             font-weight: 600;
@@ -306,7 +300,6 @@
             font-weight: 600;
         }
         
-        /* Melhorias de scroll */
         .chat-messages::-webkit-scrollbar {
             width: 4px;
         }
@@ -321,15 +314,25 @@
             border-radius: 4px;
         }
         
-        /* Ajuste para inputs em mobile evitando zoom */
         input, button, .btn-primary, .btn-secondary {
             font-size: 16px;
         }
         
-        /* Melhorias de toque */
         button, .btn-primary, .btn-secondary, a {
             cursor: pointer;
             touch-action: manipulation;
+        }
+        
+        .cpf-identificado {
+            background: #e8f0fe;
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-size: 0.75rem;
+            color: #1a73e8;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
     </style>
 </head>
@@ -377,9 +380,6 @@
 </div>
 
 <script>
-    // ==============================================================
-    // FUNÇÕES DE RASTREAMENTO GOOGLE ANALYTICS
-    // ==============================================================
     function trackEvent(eventName, eventParams = {}) {
         if (typeof gtag !== 'undefined') {
             gtag('event', eventName, eventParams);
@@ -395,11 +395,7 @@
             });
         }
     }
-    // ==============================================================
     
-    // ==============================================================
-    // CONFIGURAÇÃO DO FIREBASE
-    // ==============================================================
     const firebaseConfig = {
         apiKey: "AIzaSyCyxo7Yr5e49ghtJtcFdC0hUneabN55AdI",
         authDomain: "pad-saude.firebaseapp.com",
@@ -416,13 +412,10 @@
     const consultasRef = database.ref('consultas');
     const cuponsRef = database.ref('cupons');
     const cancelamentosRef = database.ref('cancelamentos');
+    const pacientesRef = database.ref('pacientes');
     
-    // Rastrear abertura da página
     trackPageView('PAD Saúde - Assistente WhatsApp');
     
-    // ==============================================================
-    // DADOS DAS CIDADES/UNIDADES COM LINKS DO MAPA
-    // ==============================================================
     function gerarLinkMapa(enderecoCompleto) {
         return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoCompleto)}`;
     }
@@ -459,19 +452,78 @@
     let selectedCidade = null;
     let selectedCidadeInfo = null;
     
+    let userCPF = null;
+    let userNome = null;
+    let userDataNasc = null;
+    
+    let pacienteTemp = {
+        nome: null,
+        cpf: null,
+        dataNascimento: null
+    };
+    
     const chatContainer = document.getElementById('chatMessagesWA');
     
-    // ==============================================================
-    // FUNÇÃO PARA CALCULAR STATUS DA CONSULTA
-    // ==============================================================
+    function validarCPF(cpf) {
+        cpf = cpf.replace(/[^\d]/g, '');
+        if (cpf.length !== 11) return false;
+        if (/^(\d)\1{10}$/.test(cpf)) return false;
+        
+        let soma = 0;
+        let resto;
+        
+        for (let i = 1; i <= 9; i++) {
+            soma += parseInt(cpf.substring(i-1, i)) * (11 - i);
+        }
+        resto = (soma * 10) % 11;
+        if ((resto === 10) || (resto === 11)) resto = 0;
+        if (resto !== parseInt(cpf.substring(9, 10))) return false;
+        
+        soma = 0;
+        for (let i = 1; i <= 10; i++) {
+            soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
+        }
+        resto = (soma * 10) % 11;
+        if ((resto === 10) || (resto === 11)) resto = 0;
+        if (resto !== parseInt(cpf.substring(10, 11))) return false;
+        
+        return true;
+    }
+    
+    function formatarCPF(cpf) {
+        cpf = cpf.replace(/[^\d]/g, '');
+        if (cpf.length === 11) {
+            return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+        return cpf;
+    }
+    
+    function validarDataNascimento(dataStr) {
+        const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        if (!regex.test(dataStr)) return false;
+        
+        const dia = parseInt(RegExp.$1);
+        const mes = parseInt(RegExp.$2) - 1;
+        const ano = parseInt(RegExp.$3);
+        
+        const data = new Date(ano, mes, dia);
+        if (data.getFullYear() !== ano || data.getMonth() !== mes || data.getDate() !== dia) return false;
+        
+        const hoje = new Date();
+        const dataNasc = new Date(ano, mes, dia);
+        let idade = hoje.getFullYear() - dataNasc.getFullYear();
+        const mesDiff = hoje.getMonth() - dataNasc.getMonth();
+        if (mesDiff < 0 || (mesDiff === 0 && hoje.getDate() < dataNasc.getDate())) idade--;
+        
+        return idade >= 0 && idade <= 120;
+    }
+    
     function getStatusConsulta(dataStr, cancelado = false) {
         if (cancelado) return { text: 'CANCELADO', class: 'status-cancelado', icon: 'fa-times-circle' };
-        
         if (!dataStr) return { text: 'AGENDADO', class: 'status-agendado', icon: 'fa-calendar-check' };
         
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
-        
         const dataConsulta = parseDateBr(dataStr);
         if (!dataConsulta) return { text: 'AGENDADO', class: 'status-agendado', icon: 'fa-calendar-check' };
         dataConsulta.setHours(0, 0, 0, 0);
@@ -508,10 +560,26 @@
         return `PAD-${novoNum}`;
     }
     
-    // Salvar consulta no Firebase
+    async function salvarPacienteNoFirebase(cpf, nome, dataNascimento) {
+        try {
+            const cpfLimpo = cpf.replace(/[^\d]/g, '');
+            await pacientesRef.child(cpfLimpo).set({
+                nome: nome,
+                cpf: formatarCPF(cpf),
+                dataNascimento: dataNascimento,
+                criadoEm: new Date().toISOString()
+            });
+            console.log('✅ Paciente salvo no Firebase:', cpfLimpo);
+        } catch (error) {
+            console.error('Erro ao salvar paciente:', error);
+        }
+    }
+    
+    // FUNÇÃO PRINCIPAL: Salvar consulta com TODOS os dados do cliente
     async function salvarConsultaNoFirebase(consulta) {
         try {
             await consultasRef.child(consulta.id).set({
+                // Dados da consulta
                 id: consulta.id,
                 date: consulta.date,
                 time: consulta.time,
@@ -519,18 +587,27 @@
                 cidade: consulta.cidade,
                 enderecoCompleto: consulta.enderecoCompleto,
                 linkMapa: consulta.linkMapa,
-                createdAt: consulta.createdAt || new Date().toISOString()
+                createdAt: consulta.createdAt || new Date().toISOString(),
+                status: 'AGENDADO',
+                // Dados completos do cliente
+                paciente: {
+                    nome: consulta.pacienteNome,
+                    cpf: consulta.pacienteCPF,
+                    dataNascimento: consulta.pacienteDataNasc,
+                    cpfLimpo: consulta.pacienteCPF ? consulta.pacienteCPF.replace(/[^\d]/g, '') : null
+                }
             });
-            console.log('✅ Consulta salva no Firebase:', consulta.id);
+            console.log('✅ Consulta salva no Firebase com dados do cliente:', consulta.id);
+            console.log('   - Nome:', consulta.pacienteNome);
+            console.log('   - CPF:', consulta.pacienteCPF);
+            console.log('   - Data Nasc:', consulta.pacienteDataNasc);
         } catch (error) {
             console.error('Erro ao salvar consulta:', error);
         }
     }
     
-    // Remover consulta do Firebase e salvar nos cancelamentos
     async function removerConsultaDoFirebase(consulta, motivo = "Cancelado pelo usuário") {
         try {
-            // Salvar no nó de cancelamentos
             await cancelamentosRef.child(consulta.id).set({
                 id: consulta.id,
                 date: consulta.date,
@@ -538,12 +615,15 @@
                 specialty: consulta.specialty,
                 cidade: consulta.cidade,
                 canceladoEm: new Date().toISOString(),
-                motivo: motivo
+                motivo: motivo,
+                paciente: {
+                    nome: consulta.pacienteNome,
+                    cpf: consulta.pacienteCPF,
+                    dataNascimento: consulta.pacienteDataNasc
+                }
             });
-            
-            // Remover do nó de consultas
             await consultasRef.child(consulta.id).remove();
-            console.log('✅ Consulta removida do Firebase e salva em cancelamentos:', consulta.id);
+            console.log('✅ Consulta removida do Firebase:', consulta.id);
         } catch (error) {
             console.error('Erro ao remover consulta:', error);
         }
@@ -586,17 +666,13 @@
     
     async function carregarConsultasDoFirebase() {
         try {
-            // Carregar consultas ativas
             const consultasSnapshot = await consultasRef.once('value');
             const consultasData = consultasSnapshot.val();
-            
-            // Carregar consultas canceladas
             const cancelamentosSnapshot = await cancelamentosRef.once('value');
             const cancelamentosData = cancelamentosSnapshot.val();
             
             consultas = [];
             
-            // Adicionar consultas ativas
             if (consultasData && Object.keys(consultasData).length > 0) {
                 Object.values(consultasData).forEach(cons => {
                     consultas.push({
@@ -608,12 +684,14 @@
                         enderecoCompleto: cons.enderecoCompleto || "",
                         linkMapa: cons.linkMapa || "",
                         createdAt: cons.createdAt,
-                        cancelado: false
+                        cancelado: false,
+                        pacienteNome: cons.paciente?.nome || cons.pacienteNome,
+                        pacienteCPF: cons.paciente?.cpf || cons.pacienteCPF,
+                        pacienteDataNasc: cons.paciente?.dataNascimento || cons.pacienteDataNasc
                     });
                 });
             }
             
-            // Adicionar consultas canceladas
             if (cancelamentosData && Object.keys(cancelamentosData).length > 0) {
                 Object.values(cancelamentosData).forEach(cancel => {
                     consultas.push({
@@ -626,12 +704,15 @@
                         linkMapa: "",
                         canceladoEm: cancel.canceladoEm,
                         motivo: cancel.motivo,
-                        cancelado: true
+                        cancelado: true,
+                        pacienteNome: cancel.paciente?.nome || cancel.pacienteNome,
+                        pacienteCPF: cancel.paciente?.cpf || cancel.pacienteCPF,
+                        pacienteDataNasc: cancel.paciente?.dataNascimento || cancel.pacienteDataNasc
                     });
                 });
             }
             
-            console.log(`📥 Carregadas ${consultas.length} consultas do Firebase (${consultasData ? Object.keys(consultasData).length : 0} ativas, ${cancelamentosData ? Object.keys(cancelamentosData).length : 0} canceladas)`);
+            console.log(`📥 Carregadas ${consultas.length} consultas do Firebase`);
             return true;
         } catch (error) {
             console.error('Erro ao carregar consultas:', error);
@@ -639,8 +720,36 @@
         }
     }
     
+    function getConsultasAtivasPorCPF(cpf) {
+        if (!cpf) return [];
+        const cpfLimpo = cpf.replace(/[^\d]/g, '');
+        return consultas.filter(consulta => {
+            const consultaCPF = consulta.pacienteCPF ? consulta.pacienteCPF.replace(/[^\d]/g, '') : '';
+            return consultaCPF === cpfLimpo && !consulta.cancelado;
+        });
+    }
+    
+    async function buscarPacientePorCPF(cpf) {
+        try {
+            const cpfLimpo = cpf.replace(/[^\d]/g, '');
+            const snapshot = await pacientesRef.child(cpfLimpo).once('value');
+            const data = snapshot.val();
+            if (data) {
+                return {
+                    nome: data.nome,
+                    cpf: data.cpf,
+                    dataNascimento: data.dataNascimento
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('Erro ao buscar paciente:', error);
+            return null;
+        }
+    }
+    
     function formatarComLinkMapa(endereco, linkMapa) {
-        return `${endereco}<br><a href="${linkMapa}" target="_blank" class="btn-mapa"><i class="fas fa-map-marker-alt"></i> 📍 Como chegar</a>`;
+        return `${endereco}<br><a href="${linkMapa}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; background:#e8f0fe; padding:3px 10px; border-radius:20px; font-size:0.65rem; color:#1a73e8; text-decoration:none; margin-top:5px;"><i class="fas fa-map-marker-alt"></i> Como chegar</a>`;
     }
     
     async function adicionarConsulta(id, date, time, specialty, cidadeNome, enderecoCompleto, linkMapa) {
@@ -653,16 +762,25 @@
             enderecoCompleto, 
             linkMapa, 
             createdAt: new Date().toISOString(),
-            cancelado: false
+            cancelado: false,
+            pacienteNome: pacienteTemp.nome,
+            pacienteCPF: formatarCPF(pacienteTemp.cpf),
+            pacienteDataNasc: pacienteTemp.dataNascimento
         };
         consultas.push(novaConsulta);
         await salvarConsultaNoFirebase(novaConsulta);
+        await salvarPacienteNoFirebase(pacienteTemp.cpf, pacienteTemp.nome, pacienteTemp.dataNascimento);
+        
+        userCPF = pacienteTemp.cpf;
+        userNome = pacienteTemp.nome;
+        userDataNasc = pacienteTemp.dataNascimento;
         
         trackEvent('agendar_consulta', {
             'event_category': 'consulta',
             'event_label': specialty,
             'cidade': cidadeNome,
-            'consulta_id': id
+            'consulta_id': id,
+            'paciente_nome': pacienteTemp.nome
         });
     }
     
@@ -671,9 +789,7 @@
         if (consultaRemovida && !consultaRemovida.cancelado) {
             const index = consultas.findIndex(c => c.id === id);
             if (index !== -1) {
-                // Remover da lista de consultas
                 consultas.splice(index, 1);
-                // Salvar como cancelada no Firebase
                 await removerConsultaDoFirebase(consultaRemovida, motivo);
                 
                 trackEvent('cancelar_consulta', {
@@ -691,12 +807,22 @@
         return consultas.find(c => c.id === id);
     }
     
-    function getAvailableSlots(specialty) {
+    function getAvailableSlots(specialty, dataAtualStr = null) {
         const slots = [];
         const today = new Date();
-        for (let i = 1; i <= 10; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
+        let startDate = new Date(today);
+        
+        if (dataAtualStr) {
+            const dataAtual = parseDateBr(dataAtualStr);
+            if (dataAtual && dataAtual > today) {
+                startDate = new Date(dataAtual);
+                startDate.setDate(startDate.getDate() + 1);
+            }
+        }
+        
+        for (let i = 1; i <= 15; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
             const dayOfWeek = date.getDay();
             if (dayOfWeek === 0 || dayOfWeek === 6) continue;
             const dayStr = date.toLocaleDateString('pt-BR');
@@ -718,61 +844,37 @@
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
     
-    function formatSlotsList(slots) {
-        if (slots.length === 0) return "⚠️ Nenhum horário disponível para essa especialidade.";
-        let msg = "📅 <strong>Horários disponíveis:</strong><br><br>";
+    function formatSlotsList(slots, titulo = "HORÁRIOS DISPONÍVEIS") {
+        if (slots.length === 0) return "⚠️ Nenhum horário disponível.";
+        let msg = `📅 <strong>${titulo}:</strong><br><br>`;
         slots.forEach((slot, idx) => { msg += `${idx+1}️⃣ ${slot.date} às ${slot.time}<br>`; });
         msg += "<br>Digite o <strong>número</strong> do horário:";
         return msg;
     }
     
-    function formatarListaConsultas() {
-        if (consultas.length === 0) return "📭 Você não possui consultas registradas.";
+    function formatarListaConsultasPorCPF(cpf, pacienteInfo = null) {
+        const consultasUsuario = getConsultasAtivasPorCPF(cpf);
+        const nomePaciente = pacienteInfo ? pacienteInfo.nome : (userNome || '');
         
-        let lista = "📋 <strong>SUAS CONSULTAS:</strong><br><br>";
-        
-        // Separar consultas por status
-        const agendadas = consultas.filter(c => !c.cancelado && getStatusConsulta(c.date, c.cancelado).text === 'AGENDADO');
-        const realizadas = consultas.filter(c => !c.cancelado && getStatusConsulta(c.date, c.cancelado).text === 'REALIZADO');
-        const canceladas = consultas.filter(c => c.cancelado);
-        
-        // Consultas Agendadas
-        if (agendadas.length > 0) {
-            lista += "🟢 <strong>AGENDADAS</strong><br>";
-            agendadas.forEach(c => {
-                lista += `   📌 <span class="id-badge-chat">ID: ${c.id}</span><br>`;
-                lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br>`;
-                lista += `   📍 ${c.cidade}<br>`;
-                if (c.enderecoCompleto && c.linkMapa) {
-                    lista += `   <a href="${c.linkMapa}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; background:#e8f0fe; padding:3px 10px; border-radius:20px; font-size:0.65rem; color:#1a73e8; text-decoration:none; margin-top:5px;"><i class="fas fa-map-marker-alt"></i> Ver mapa</a><br>`;
-                }
-                lista += `<br>`;
-            });
+        if (consultasUsuario.length === 0) {
+            return `📭 Nenhuma consulta ativa encontrada para o CPF ${formatarCPF(cpf)}.`;
         }
         
-        // Consultas Realizadas
-        if (realizadas.length > 0) {
-            lista += "🔵 <strong>REALIZADAS</strong><br>";
-            realizadas.forEach(c => {
-                lista += `   📌 <span class="id-badge-chat">ID: ${c.id}</span><br>`;
-                lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br>`;
-                lista += `   📍 ${c.cidade}<br><br>`;
-            });
-        }
+        let lista = `📋 <strong>MINHAS CONSULTAS</strong><br>`;
+        lista += `<div class="cpf-identificado"><i class="fas fa-id-card"></i> CPF: ${formatarCPF(cpf)} | ${nomePaciente || ''}</div><br>`;
         
-        // Consultas Canceladas
-        if (canceladas.length > 0) {
-            lista += "🔴 <strong>CANCELADAS</strong><br>";
-            canceladas.forEach(c => {
-                lista += `   📌 <span class="id-badge-chat">ID: ${c.id}</span><br>`;
-                lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br>`;
-                lista += `   📍 ${c.cidade}<br>`;
-                if (c.motivo) lista += `   📝 Motivo: ${c.motivo}<br>`;
-                lista += `<br>`;
-            });
-        }
+        lista += "🟢 <strong>CONSULTAS AGENDADAS</strong><br>";
+        consultasUsuario.forEach((c, idx) => {
+            lista += `${idx+1}️⃣ <strong>ID: ${c.id}</strong><br>`;
+            lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br>`;
+            lista += `   📍 ${c.cidade}<br>`;
+            if (c.enderecoCompleto && c.linkMapa) {
+                lista += `   <a href="${c.linkMapa}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; background:#e8f0fe; padding:3px 10px; border-radius:20px; font-size:0.65rem; color:#1a73e8; text-decoration:none; margin-top:5px;"><i class="fas fa-map-marker-alt"></i> Ver mapa</a><br>`;
+            }
+            lista += `<br>`;
+        });
         
-        lista += "💡 Guarde o ID para cancelar ou remarcar consultas agendadas.";
+        lista += "💡 Digite o <strong>NÚMERO</strong> da consulta que deseja remarcar ou cancelar.";
         return lista;
     }
     
@@ -792,13 +894,13 @@
     
     function consultarExames() {
         const mensagemExames = `
-            <div class="exames-card">
+            <div>
                 🔬 <strong>RESULTADOS DE EXAMES</strong> 🔬<br><br>
-                <a href="${LINK_EXAMES}" target="_blank" class="btn-exames">
+                <a href="${LINK_EXAMES}" target="_blank" style="background:#146b65; color:white; padding:10px 16px; border-radius:30px; text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
                     <i class="fas fa-flask"></i> Acessar Portal
                     <i class="fas fa-external-link-alt"></i>
                 </a><br><br>
-                <div class="info-box">
+                <div>
                     📌 Use CPF e data de nascimento<br>
                     📱 Disponível 24/7
                 </div>
@@ -845,7 +947,7 @@
         const msgCupom = `
             🎫 <strong>🎁 CUPOM GERADO!</strong><br><br>
             🔖 <strong style="font-size:1.2rem; background:#f0f7f5; padding:8px 12px; border-radius:12px;">${cupomGerado}</strong><br><br>
-            <div class="info-box">
+            <div>
             ✨ ${novoCupom.desconto}<br>
             📅 ${new Date(dataAtual).toLocaleString('pt-BR')}
             </div>
@@ -867,17 +969,209 @@
         });
     }
     
+    // ==============================================================
+    // FLUXO DE CONSULTA POR CPF (OPÇÃO 4)
+    // ==============================================================
+    async function processConsultaPorCPF(input) {
+        if (step === 40) {
+            const cpfLimpo = input.replace(/[^\d]/g, '');
+            if (validarCPF(cpfLimpo)) {
+                const pacienteInfo = await buscarPacientePorCPF(cpfLimpo);
+                const listaConsultas = formatarListaConsultasPorCPF(cpfLimpo, pacienteInfo);
+                addMessage(listaConsultas);
+                
+                userCPF = cpfLimpo;
+                if (pacienteInfo) {
+                    userNome = pacienteInfo.nome;
+                    userDataNasc = pacienteInfo.dataNascimento;
+                }
+                
+                step = 41;
+                addMessage("Digite o número da consulta para remarcar ou cancelar, ou 0 para voltar.");
+            } else {
+                addMessage("❌ CPF inválido! Informe um CPF válido (apenas números ou no formato 000.000.000-00):");
+            }
+            return;
+        }
+        
+        if (step === 41) {
+            if (input === "0") {
+                step = 0;
+                addMessage("Menu: 1,2,3,4,5,6,7");
+                return;
+            }
+            
+            const escolha = parseInt(input);
+            const consultasUsuario = getConsultasAtivasPorCPF(userCPF);
+            
+            if (!isNaN(escolha) && escolha >= 1 && escolha <= consultasUsuario.length) {
+                const consultaSelecionada = consultasUsuario[escolha - 1];
+                addMessage(`📌 Consulta selecionada: <strong>${consultaSelecionada.id}</strong><br>📅 ${consultaSelecionada.date} às ${consultaSelecionada.time}<br>🔬 ${consultaSelecionada.specialty}<br><br>O que deseja fazer?<br>1️⃣ Cancelar consulta<br>2️⃣ Remarcar consulta<br><br>Digite o número:`);
+                step = 42;
+            } else {
+                addMessage(`Opção inválida. Digite um número entre 1 e ${consultasUsuario.length}:`);
+            }
+            return;
+        }
+        
+        if (step === 42) {
+            if (input === "1") {
+                // Cancelar
+                step = 43;
+                addMessage("Confirma o cancelamento? Digite <strong>SIM</strong> ou NÃO.");
+            } else if (input === "2") {
+                // Remarcar
+                step = 44;
+                addMessage("📅 Buscando novos horários disponíveis...");
+                const consultasUsuario = getConsultasAtivasPorCPF(userCPF);
+                const consultaSelecionada = consultasUsuario[0];
+                remarcacaoHorariosDisponiveis = getAvailableSlots(consultaSelecionada.specialty, consultaSelecionada.date);
+                
+                if (remarcacaoHorariosDisponiveis.length === 0) {
+                    addMessage(`😓 Não há horários disponíveis para remarcação no momento.`);
+                    step = 0;
+                    addMessage("Menu: 1,2,3,4,5,6,7");
+                    return;
+                }
+                
+                addMessage(formatSlotsList(remarcacaoHorariosDisponiveis, "HORÁRIOS DISPONÍVEIS PARA REMARCAÇÃO"));
+                step = 45;
+            } else {
+                addMessage("Opção inválida. Digite 1 para Cancelar ou 2 para Remarcar:");
+            }
+            return;
+        }
+        
+        if (step === 43) {
+            if (input.toLowerCase() === "sim") {
+                const consultasUsuario = getConsultasAtivasPorCPF(userCPF);
+                const consultaSelecionada = consultasUsuario[0];
+                await removerConsultaPorId(consultaSelecionada.id);
+                addMessage(`✅ Consulta ${consultaSelecionada.id} cancelada com sucesso!`);
+                step = 0;
+                addMessage("Menu: 1,2,3,4,5,6,7");
+            } else if (input.toLowerCase() === "não" || input.toLowerCase() === "nao") {
+                addMessage("❌ Cancelamento não realizado.");
+                step = 0;
+                addMessage("Menu: 1,2,3,4,5,6,7");
+            } else {
+                addMessage("Responda SIM ou NÃO:");
+            }
+            return;
+        }
+        
+        if (step === 44) {
+            const escolha = parseInt(input);
+            const consultasUsuario = getConsultasAtivasPorCPF(userCPF);
+            const consultaSelecionada = consultasUsuario[0];
+            
+            if (!isNaN(escolha) && escolha >= 1 && escolha <= remarcacaoHorariosDisponiveis.length) {
+                const novoSlot = remarcacaoHorariosDisponiveis[escolha - 1];
+                
+                addMessage(`📌 Você escolheu: <strong>${novoSlot.date} às ${novoSlot.time}</strong><br><br>Confirma a remarcação? Digite <strong>"SIM"</strong> ou "CANCELAR".`);
+                
+                step = 46;
+                remarcacaoHorariosDisponiveis = [novoSlot];
+            } else {
+                addMessage(`Opção inválida. Escolha 1-${remarcacaoHorariosDisponiveis.length}:`);
+            }
+            return;
+        }
+        
+        if (step === 46) {
+            const consultasUsuario = getConsultasAtivasPorCPF(userCPF);
+            const consultaSelecionada = consultasUsuario[0];
+            const novoSlot = remarcacaoHorariosDisponiveis[0];
+            
+            if (input.toLowerCase() === "sim") {
+                await removerConsultaPorId(consultaSelecionada.id);
+                const novoId = await gerarIdUnico();
+                
+                pacienteTemp = {
+                    nome: consultaSelecionada.pacienteNome,
+                    cpf: userCPF,
+                    dataNascimento: consultaSelecionada.pacienteDataNasc
+                };
+                
+                await adicionarConsulta(novoId, novoSlot.date, novoSlot.time, consultaSelecionada.specialty, consultaSelecionada.cidade, consultaSelecionada.enderecoCompleto, consultaSelecionada.linkMapa);
+                
+                addMessage(`✅ <strong>CONSULTA REMARCADA COM SUCESSO!</strong><br><br>🔖 NOVO ID: ${novoId}<br>📅 Nova data: ${novoSlot.date} às ${novoSlot.time}<br>🔬 Especialidade: ${consultaSelecionada.specialty}<br>📍 Local: ${consultaSelecionada.cidade}`);
+                
+                trackEvent('remarcar_consulta', {
+                    'event_category': 'consulta',
+                    'antigo_id': consultaSelecionada.id,
+                    'novo_id': novoId
+                });
+                
+                step = 0;
+                remarcacaoHorariosDisponiveis = [];
+                addMessage("Menu: 1,2,3,4,5,6,7");
+            } else if (input.toLowerCase() === "cancelar") {
+                addMessage("❌ Remarcação cancelada.");
+                step = 0;
+                remarcacaoHorariosDisponiveis = [];
+                addMessage("Menu: 1,2,3,4,5,6,7");
+            } else {
+                addMessage("Responda SIM ou CANCELAR:");
+            }
+            return;
+        }
+    }
+    
+    // ==============================================================
+    // FLUXO DE AGENDAMENTO
+    // ==============================================================
     async function processAgendamento(input) {
         if (step === 1) {
             const espMap = { "1": "Clínico Geral", "2": "Cardiologia", "3": "Dermatologia", "4": "Pediatria" };
             if (espMap[input]) {
                 selectedSpecialty = espMap[input];
-                step = 1.5;
+                step = 1.1;
                 addMessage(`✅ Especialidade: <strong>${selectedSpecialty}</strong>.`);
-                addMessage(`📍 <strong>Escolha a unidade:</strong><br><br>1️⃣ Caruaru-PE<br>2️⃣ Recife-PE (Madalena)<br>3️⃣ Recife-PE (Home Care)<br><br>Digite o número:`);
-            } else addMessage("Opção inválida. Escolha 1-4.");
+                addMessage(`📝 Para continuar, informe seu <strong>NOME COMPLETO</strong>:`);
+            } else {
+                addMessage("Opção inválida. Escolha 1-4.");
+            }
             return;
         }
+        
+        if (step === 1.1) {
+            if (input.trim().length >= 3) {
+                pacienteTemp.nome = input.trim();
+                step = 1.2;
+                addMessage(`✅ Nome: ${pacienteTemp.nome}`);
+                addMessage(`🆔 Informe seu <strong>CPF</strong> (apenas números ou com pontos/traços):`);
+            } else {
+                addMessage("❌ Nome inválido. Informe seu nome completo (mínimo 3 caracteres):");
+            }
+            return;
+        }
+        
+        if (step === 1.2) {
+            const cpfLimpo = input.replace(/[^\d]/g, '');
+            if (validarCPF(cpfLimpo)) {
+                pacienteTemp.cpf = cpfLimpo;
+                step = 1.3;
+                addMessage(`✅ CPF: ${formatarCPF(cpfLimpo)}`);
+                addMessage(`🎂 Informe sua <strong>DATA DE NASCIMENTO</strong> (formato DD/MM/AAAA):`);
+            } else {
+                addMessage("❌ CPF inválido! Informe um CPF válido (apenas números ou no formato 000.000.000-00):");
+            }
+            return;
+        }
+        
+        if (step === 1.3) {
+            if (validarDataNascimento(input)) {
+                pacienteTemp.dataNascimento = input;
+                step = 1.5;
+                addMessage(`✅ Data de nascimento: ${input}`);
+                addMessage(`📍 <strong>Escolha a unidade:</strong><br><br>1️⃣ Caruaru-PE<br>2️⃣ Recife-PE (Madalena)<br>3️⃣ Recife-PE (Home Care)<br><br>Digite o número:`);
+            } else {
+                addMessage("❌ Data inválida! Use o formato DD/MM/AAAA (ex: 15/05/1990):");
+            }
+            return;
+        }
+        
         if (step === 1.5) {
             const cidadeMap = { "1": 1, "2": 2, "3": 3 };
             if (cidadeMap[input]) {
@@ -894,19 +1188,25 @@
                 const linkMapa = gerarLinkMapa(selectedCidadeInfo.enderecoCompleto);
                 const enderecoFormatado = formatarComLinkMapa(selectedCidadeInfo.enderecoCompleto, linkMapa);
                 addMessage(`📍 ${selectedCidadeInfo.nome}<br>📌 ${selectedCidadeInfo.endereco}<br>${enderecoFormatado}`);
-                addMessage(formatSlotsList(currentSlots));
-            } else addMessage("Opção inválida. Escolha 1, 2 ou 3.");
+                addMessage(formatSlotsList(currentSlots, "HORÁRIOS DISPONÍVEIS PARA AGENDAMENTO"));
+            } else {
+                addMessage("Opção inválida. Escolha 1, 2 ou 3.");
+            }
             return;
         }
+        
         if (step === 2) {
             const escolha = parseInt(input);
             if (!isNaN(escolha) && escolha >= 1 && escolha <= currentSlots.length) {
                 selectedSlot = currentSlots[escolha-1];
                 step = 3;
                 addMessage(`📌 Você escolheu: <strong>${selectedSlot.date} às ${selectedSlot.time}</strong> em ${selectedCidade}. Confirme com <strong>"SIM"</strong> ou "CANCELAR".`);
-            } else addMessage(`Número inválido. Escolha 1-${currentSlots.length}.`);
+            } else {
+                addMessage(`Número inválido. Escolha 1-${currentSlots.length}.`);
+            }
             return;
         }
+        
         if (step === 3) {
             if (input.toLowerCase() === "sim") {
                 const novoId = await gerarIdUnico();
@@ -914,19 +1214,239 @@
                 const linkMapa = gerarLinkMapa(enderecoCompleto);
                 await adicionarConsulta(novoId, selectedSlot.date, selectedSlot.time, selectedSpecialty, selectedCidade, enderecoCompleto, linkMapa);
                 const enderecoFormatado = formatarComLinkMapa(enderecoCompleto, linkMapa);
-                addMessage(`✅ <strong>CONSULTA AGENDADA!</strong><br><br>📍 ${selectedCidade}<br>📌 ${selectedSlot.date} às ${selectedSlot.time}<br>🔬 ${selectedSpecialty}<br>🔖 ID: ${novoId}<br><br>🏥 Endereço:<br>${enderecoFormatado}`);
+                addMessage(`✅ <strong>CONSULTA AGENDADA!</strong><br><br>👤 Paciente: ${pacienteTemp.nome}<br>🆔 CPF: ${formatarCPF(pacienteTemp.cpf)}<br>🎂 Nasc: ${pacienteTemp.dataNascimento}<br>📍 ${selectedCidade}<br>📌 ${selectedSlot.date} às ${selectedSlot.time}<br>🔬 ${selectedSpecialty}<br>🔖 ID: ${novoId}<br><br>🏥 Endereço:<br>${enderecoFormatado}`);
                 step = 0;
+                pacienteTemp = { nome: null, cpf: null, dataNascimento: null };
                 selectedSpecialty = null; currentSlots = []; selectedSlot = null; selectedCidade = null; selectedCidadeInfo = null;
                 addMessage("Menu: 1,2,3,4,5,6,7");
             } else if (input.toLowerCase() === "cancelar") {
                 addMessage("❌ Agendamento cancelado.");
                 step = 0;
+                pacienteTemp = { nome: null, cpf: null, dataNascimento: null };
                 addMessage("Menu: 1,2,3,4,5,6,7");
-            } else addMessage("Responda SIM ou CANCELAR.");
+            } else {
+                addMessage("Responda SIM ou CANCELAR.");
+            }
             return;
         }
     }
     
+    // ==============================================================
+    // FLUXO DE CANCELAMENTO SIMPLES (OPÇÃO 2)
+    // ==============================================================
+    let cancelamentoCPF = null;
+    let cancelamentoId = null;
+    
+    async function processCancelamentoComCPF(input) {
+        if (step === 20) {
+            const cpfLimpo = input.replace(/[^\d]/g, '');
+            if (validarCPF(cpfLimpo)) {
+                cancelamentoCPF = cpfLimpo;
+                const consultasUsuario = getConsultasAtivasPorCPF(cpfLimpo);
+                
+                if (consultasUsuario.length === 0) {
+                    addMessage(`📭 Nenhuma consulta ativa encontrada para o CPF ${formatarCPF(cpfLimpo)}.`);
+                    step = 0;
+                    addMessage("Menu: 1,2,3,4,5,6,7");
+                    return;
+                }
+                
+                let lista = `📋 <strong>CONSULTAS DO CPF ${formatarCPF(cpfLimpo)}</strong><br><br>`;
+                consultasUsuario.forEach((cons, idx) => {
+                    lista += `${idx+1}️⃣ ID: ${cons.id} - ${cons.date} às ${cons.time} - ${cons.specialty}<br>`;
+                });
+                lista += `<br>Digite o <strong>NÚMERO</strong> da consulta que deseja cancelar:`;
+                addMessage(lista);
+                step = 21;
+            } else {
+                addMessage("❌ CPF inválido! Informe um CPF válido:");
+            }
+            return;
+        }
+        
+        if (step === 21) {
+            const escolha = parseInt(input);
+            const consultasUsuario = getConsultasAtivasPorCPF(cancelamentoCPF);
+            
+            if (!isNaN(escolha) && escolha >= 1 && escolha <= consultasUsuario.length) {
+                const consultaSelecionada = consultasUsuario[escolha - 1];
+                cancelamentoId = consultaSelecionada.id;
+                
+                addMessage(`📌 Você selecionou: <strong>${consultaSelecionada.id}</strong> - ${consultaSelecionada.date} às ${consultaSelecionada.time}<br><br>Confirma o cancelamento? Digite <strong>"SIM"</strong> ou "NÃO".`);
+                step = 22;
+            } else {
+                addMessage(`Opção inválida. Digite um número entre 1 e ${consultasUsuario.length}:`);
+            }
+            return;
+        }
+        
+        if (step === 22) {
+            if (input.toLowerCase() === "sim") {
+                const consulta = buscarConsultaPorId(cancelamentoId);
+                if (consulta && !consulta.cancelado) {
+                    const status = getStatusConsulta(consulta.date, false);
+                    if (status.text === 'REALIZADO') {
+                        addMessage(`❌ A consulta ${cancelamentoId} já foi realizada e não pode ser cancelada.`);
+                    } else {
+                        await removerConsultaPorId(cancelamentoId);
+                        addMessage(`✅ Consulta ${cancelamentoId} cancelada com sucesso!`);
+                        
+                        trackEvent('cancelar_consulta', {
+                            'event_category': 'consulta',
+                            'consulta_id': cancelamentoId
+                        });
+                    }
+                } else {
+                    addMessage(`❌ Consulta ${cancelamentoId} não encontrada ou já cancelada.`);
+                }
+                step = 0;
+                cancelamentoCPF = null;
+                cancelamentoId = null;
+                addMessage("Menu: 1,2,3,4,5,6,7");
+            } else if (input.toLowerCase() === "não" || input.toLowerCase() === "nao") {
+                addMessage("❌ Cancelamento não realizado.");
+                step = 0;
+                cancelamentoCPF = null;
+                cancelamentoId = null;
+                addMessage("Menu: 1,2,3,4,5,6,7");
+            } else {
+                addMessage("Responda SIM ou NÃO:");
+            }
+            return;
+        }
+    }
+    
+    // ==============================================================
+    // FLUXO DE REMARCAÇÃO (OPÇÃO 3)
+    // ==============================================================
+    let remarcacaoCPF = null;
+    let remarcacaoConsultaOriginal = null;
+    let remarcacaoHorariosDisponiveis = [];
+    
+    async function processRemarcacaoComCPF(input) {
+        if (step === 30) {
+            const cpfLimpo = input.replace(/[^\d]/g, '');
+            if (validarCPF(cpfLimpo)) {
+                remarcacaoCPF = cpfLimpo;
+                const consultasUsuario = getConsultasAtivasPorCPF(cpfLimpo);
+                
+                if (consultasUsuario.length === 0) {
+                    addMessage(`📭 Nenhuma consulta ativa encontrada para o CPF ${formatarCPF(cpfLimpo)}.`);
+                    step = 0;
+                    addMessage("Menu: 1,2,3,4,5,6,7");
+                    return;
+                }
+                
+                let lista = `📋 <strong>CONSULTAS DO CPF ${formatarCPF(cpfLimpo)}</strong><br><br>`;
+                consultasUsuario.forEach((cons, idx) => {
+                    lista += `${idx+1}️⃣ ID: ${cons.id} - ${cons.date} às ${cons.time} - ${cons.specialty}<br>`;
+                });
+                lista += `<br>Digite o <strong>NÚMERO</strong> da consulta que deseja remarcar:`;
+                addMessage(lista);
+                step = 31;
+            } else {
+                addMessage("❌ CPF inválido! Informe um CPF válido:");
+            }
+            return;
+        }
+        
+        if (step === 31) {
+            const escolha = parseInt(input);
+            const consultasUsuario = getConsultasAtivasPorCPF(remarcacaoCPF);
+            
+            if (!isNaN(escolha) && escolha >= 1 && escolha <= consultasUsuario.length) {
+                remarcacaoConsultaOriginal = consultasUsuario[escolha - 1];
+                
+                const status = getStatusConsulta(remarcacaoConsultaOriginal.date, false);
+                if (status.text === 'REALIZADO') {
+                    addMessage(`❌ A consulta ${remarcacaoConsultaOriginal.id} já foi realizada e não pode ser remarcada.`);
+                    step = 0;
+                    addMessage("Menu: 1,2,3,4,5,6,7");
+                    return;
+                }
+                
+                addMessage(`📌 Consulta selecionada:<br>🔖 ID: ${remarcacaoConsultaOriginal.id}<br>📅 Data atual: ${remarcacaoConsultaOriginal.date} às ${remarcacaoConsultaOriginal.time}<br>🔬 Especialidade: ${remarcacaoConsultaOriginal.specialty}<br>📍 Local: ${remarcacaoConsultaOriginal.cidade}<br><br>📅 Buscando novos horários disponíveis...`);
+                
+                remarcacaoHorariosDisponiveis = getAvailableSlots(remarcacaoConsultaOriginal.specialty, remarcacaoConsultaOriginal.date);
+                
+                if (remarcacaoHorariosDisponiveis.length === 0) {
+                    addMessage(`😓 Não há horários disponíveis para remarcação de ${remarcacaoConsultaOriginal.specialty} no momento.`);
+                    step = 0;
+                    addMessage("Menu: 1,2,3,4,5,6,7");
+                    return;
+                }
+                
+                addMessage(formatSlotsList(remarcacaoHorariosDisponiveis, "HORÁRIOS DISPONÍVEIS PARA REMARCAÇÃO"));
+                step = 32;
+            } else {
+                addMessage(`Opção inválida. Digite um número entre 1 e ${consultasUsuario.length}:`);
+            }
+            return;
+        }
+        
+        if (step === 32) {
+            const escolha = parseInt(input);
+            
+            if (!isNaN(escolha) && escolha >= 1 && escolha <= remarcacaoHorariosDisponiveis.length) {
+                const novoSlot = remarcacaoHorariosDisponiveis[escolha - 1];
+                
+                addMessage(`📌 Você escolheu o novo horário: <strong>${novoSlot.date} às ${novoSlot.time}</strong><br><br>Confirma a remarcação? Digite <strong>"SIM"</strong> ou "CANCELAR".`);
+                
+                step = 33;
+                remarcacaoHorariosDisponiveis = [novoSlot];
+            } else {
+                addMessage(`Opção inválida. Escolha 1-${remarcacaoHorariosDisponiveis.length}:`);
+            }
+            return;
+        }
+        
+        if (step === 33) {
+            if (input.toLowerCase() === "sim") {
+                const novoSlot = remarcacaoHorariosDisponiveis[0];
+                
+                await removerConsultaPorId(remarcacaoConsultaOriginal.id);
+                const novoId = await gerarIdUnico();
+                
+                pacienteTemp = {
+                    nome: remarcacaoConsultaOriginal.pacienteNome,
+                    cpf: remarcacaoCPF,
+                    dataNascimento: remarcacaoConsultaOriginal.pacienteDataNasc
+                };
+                
+                await adicionarConsulta(novoId, novoSlot.date, novoSlot.time, remarcacaoConsultaOriginal.specialty, remarcacaoConsultaOriginal.cidade, remarcacaoConsultaOriginal.enderecoCompleto, remarcacaoConsultaOriginal.linkMapa);
+                
+                addMessage(`✅ <strong>CONSULTA REMARCADA COM SUCESSO!</strong><br><br>🔖 NOVO ID: ${novoId}<br>📅 Nova data: ${novoSlot.date} às ${novoSlot.time}<br>🔬 Especialidade: ${remarcacaoConsultaOriginal.specialty}<br>📍 Local: ${remarcacaoConsultaOriginal.cidade}<br><br>🏥 Endereço:<br>${formatarComLinkMapa(remarcacaoConsultaOriginal.enderecoCompleto, remarcacaoConsultaOriginal.linkMapa)}`);
+                
+                trackEvent('remarcar_consulta', {
+                    'event_category': 'consulta',
+                    'antigo_id': remarcacaoConsultaOriginal.id,
+                    'novo_id': novoId,
+                    'especialidade': remarcacaoConsultaOriginal.specialty
+                });
+                
+                step = 0;
+                remarcacaoCPF = null;
+                remarcacaoConsultaOriginal = null;
+                remarcacaoHorariosDisponiveis = [];
+                pacienteTemp = { nome: null, cpf: null, dataNascimento: null };
+                addMessage("Menu: 1,2,3,4,5,6,7");
+            } else if (input.toLowerCase() === "cancelar") {
+                addMessage("❌ Remarcação cancelada.");
+                step = 0;
+                remarcacaoCPF = null;
+                remarcacaoConsultaOriginal = null;
+                remarcacaoHorariosDisponiveis = [];
+                addMessage("Menu: 1,2,3,4,5,6,7");
+            } else {
+                addMessage("Responda SIM ou CANCELAR:");
+            }
+            return;
+        }
+    }
+    
+    // ==============================================================
+    // COMANDOS GERAIS
+    // ==============================================================
     function processGeneralCommand(input) {
         if (step !== 0 && step !== 5 && step !== 50) return false;
         
@@ -944,25 +1464,21 @@
             return true; 
         }
         if (input === "2") { 
-            addMessage("🔁 Cancelar consulta\n\nInforme o ID (ex: PAD-1234):"); 
-            step = 99;
+            addMessage("🔁 Cancelar consulta\n\nPara cancelar, informe seu <strong>CPF</strong>:"); 
+            step = 20;
             trackEvent('iniciar_cancelamento', { 'event_category': 'consulta' });
             return true; 
         }
         if (input === "3") { 
-            addMessage("🔄 Remarcar consulta\n\nDigite: ID DD/MM/AAAA HH:MM\nEx: PAD-1001 28/12/2024 09:30"); 
-            step = 98;
+            addMessage("🔄 Remarcar consulta\n\nPara remarcar, informe seu <strong>CPF</strong>:"); 
+            step = 30;
             trackEvent('iniciar_remarcacao', { 'event_category': 'consulta' });
             return true; 
         }
         if (input === "4") { 
-            addMessage(formatarListaConsultas()); 
-            step = 97; 
-            addMessage("Digite 0 para voltar.");
-            trackEvent('ver_consultas', { 
-                'event_category': 'consulta',
-                'quantidade_consultas': consultas.length 
-            });
+            addMessage("🔍 Para consultar suas consultas, informe seu <strong>CPF</strong>:"); 
+            step = 40;
+            trackEvent('ver_consultas', { 'event_category': 'consulta' });
             return true; 
         }
         if (input === "5") { 
@@ -985,74 +1501,27 @@
         return true;
     }
     
-    async function processOtherSteps(input) {
-        if (step === 99) {
-            const consulta = buscarConsultaPorId(input);
-            if (consulta && !consulta.cancelado) { 
-                // Verificar se a consulta já foi realizada
-                const status = getStatusConsulta(consulta.date, false);
-                if (status.text === 'REALIZADO') {
-                    addMessage(`❌ A consulta ${input} já foi realizada e não pode ser cancelada.`);
-                } else {
-                    await removerConsultaPorId(input);
-                    addMessage(`✅ Consulta ${input} cancelada!`);
-                }
-            } else if (consulta && consulta.cancelado) {
-                addMessage(`❌ A consulta ${input} já está cancelada.`);
-            } else {
-                addMessage(`❌ ID ${input} não encontrado.`);
-            }
-            step = 0; 
-            addMessage("Menu: 1,2,3,4,5,6,7");
-            return true;
-        }
-        if (step === 98) {
-            const parts = input.split(' ');
-            if (parts.length >= 3) {
-                const oldId = parts[0];
-                const newDate = parts[1];
-                const newTime = parts[2];
-                if (/^\d{2}\/\d{2}\/\d{4}$/.test(newDate) && /^([01]\d|2[0-3]):([0-5]\d)$/.test(newTime)) {
-                    const consultaExistente = buscarConsultaPorId(oldId);
-                    if (consultaExistente && !consultaExistente.cancelado) {
-                        const status = getStatusConsulta(consultaExistente.date, false);
-                        if (status.text === 'REALIZADO') {
-                            addMessage(`❌ A consulta ${oldId} já foi realizada e não pode ser remarcada.`);
-                        } else {
-                            await removerConsultaPorId(oldId);
-                            const novoId = await gerarIdUnico();
-                            await adicionarConsulta(novoId, newDate, newTime, consultaExistente.specialty, consultaExistente.cidade, consultaExistente.enderecoCompleto, consultaExistente.linkMapa);
-                            addMessage(`✅ Remarcada! Novo ID: ${novoId} - ${newDate} ${newTime}`);
-                            
-                            trackEvent('remarcar_consulta', {
-                                'event_category': 'consulta',
-                                'antigo_id': oldId,
-                                'novo_id': novoId,
-                                'especialidade': consultaExistente.specialty
-                            });
-                        }
-                    } else if (consultaExistente && consultaExistente.cancelado) {
-                        addMessage(`❌ A consulta ${oldId} está cancelada e não pode ser remarcada.`);
-                    } else {
-                        addMessage(`❌ ID ${oldId} não encontrado.`);
-                    }
-                } else addMessage("Formato inválido. Use DD/MM/AAAA HH:MM");
-            } else addMessage("Formato: ID DD/MM/AAAA HH:MM");
-            step = 0; 
-            addMessage("Menu: 1,2,3,4,5,6,7");
-            return true;
-        }
-        if (step === 97 && input === "0") { 
-            step = 0; 
-            addMessage("Menu: 1,2,3,4,5,6,7"); 
-            return true; 
-        }
-        return false;
-    }
-    
     async function processUserInput(input) {
-        if (step === 1 || step === 1.5 || step === 2 || step === 3) { await processAgendamento(input); return; }
-        if (step === 99 || step === 98 || step === 97) { if (await processOtherSteps(input)) return; }
+        if (step === 40 || step === 41 || step === 42 || step === 43 || step === 44 || step === 45 || step === 46) {
+            await processConsultaPorCPF(input);
+            return;
+        }
+        
+        if (step === 20 || step === 21 || step === 22) {
+            await processCancelamentoComCPF(input);
+            return;
+        }
+        
+        if (step === 30 || step === 31 || step === 32 || step === 33) {
+            await processRemarcacaoComCPF(input);
+            return;
+        }
+        
+        if (step === 1 || step === 1.1 || step === 1.2 || step === 1.3 || step === 1.5 || step === 2 || step === 3) { 
+            await processAgendamento(input); 
+            return; 
+        }
+        
         processGeneralCommand(input);
     }
     
@@ -1082,7 +1551,21 @@
         });
         
         document.getElementById('resetChatWA').onclick = async () => {
-            step = 0; selectedSpecialty = null; currentSlots = []; selectedSlot = null; selectedCidade = null; selectedCidadeInfo = null;
+            step = 0; 
+            selectedSpecialty = null; 
+            currentSlots = []; 
+            selectedSlot = null; 
+            selectedCidade = null; 
+            selectedCidadeInfo = null;
+            pacienteTemp = { nome: null, cpf: null, dataNascimento: null };
+            userCPF = null;
+            userNome = null;
+            userDataNasc = null;
+            cancelamentoCPF = null;
+            cancelamentoId = null;
+            remarcacaoCPF = null;
+            remarcacaoConsultaOriginal = null;
+            remarcacaoHorariosDisponiveis = [];
             chatContainer.innerHTML = '';
             await carregarConsultasDoFirebase();
             addMessage("🏥 Conversa reiniciada!\n\n1️⃣ Agendar\n2️⃣ Cancelar\n3️⃣ Remarcar\n4️⃣ Ver consultas\n5️⃣ Gerar cupom\n6️⃣ Ver cupons\n7️⃣ Exames\n\nDigite a opção:");
