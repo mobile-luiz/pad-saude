@@ -3,6 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    
+    <!-- ============================================= -->
+    <!-- GOOGLE ANALYTICS 4 (GA4) - CÓDIGO DE RASTREAMENTO -->
+    <!-- ============================================= -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L4J1JWSQCX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-L4J1JWSQCX', {
+            'page_title': 'PAD Saúde - Assistente WhatsApp',
+            'page_location': window.location.href,
+            'send_page_view': true
+        });
+    </script>
+    <!-- ============================================= -->
+    
     <title>PAD Saúde · Assistente WhatsApp</title>
     <!-- Google Fonts + Font Awesome 6 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -516,6 +533,26 @@
 
 <script>
     // ==============================================================
+    // FUNÇÕES DE RASTREAMENTO GOOGLE ANALYTICS
+    // ==============================================================
+    function trackEvent(eventName, eventParams = {}) {
+        if (typeof gtag !== 'undefined') {
+            gtag('event', eventName, eventParams);
+            console.log(`📊 GA4 Event: ${eventName}`, eventParams);
+        }
+    }
+    
+    function trackPageView(pageTitle) {
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'page_view', {
+                page_title: pageTitle,
+                page_location: window.location.href
+            });
+        }
+    }
+    // ==============================================================
+    
+    // ==============================================================
     // CONFIGURAÇÃO DO FIREBASE
     // ==============================================================
     const firebaseConfig = {
@@ -533,6 +570,9 @@
     const database = firebase.database();
     const consultasRef = database.ref('consultas');
     const cuponsRef = database.ref('cupons');
+    
+    // Rastrear abertura da página
+    trackPageView('PAD Saúde - Assistente WhatsApp');
     
     // ==============================================================
     // DADOS DAS CIDADES/UNIDADES COM LINKS DO MAPA
@@ -683,13 +723,31 @@
     async function adicionarConsulta(id, date, time, specialty, cidadeNome, enderecoCompleto, linkMapa) {
         consultas.push({ id, date, time, specialty, cidade: cidadeNome, enderecoCompleto, linkMapa, createdAt: new Date().toISOString() });
         await salvarConsultasNoFirebase();
+        
+        // RASTREAMENTO: Agendamento de consulta
+        trackEvent('agendar_consulta', {
+            'event_category': 'consulta',
+            'event_label': specialty,
+            'cidade': cidadeNome,
+            'consulta_id': id
+        });
     }
     
     async function removerConsultaPorId(id) {
+        const consultaRemovida = buscarConsultaPorId(id);
         const index = consultas.findIndex(c => c.id === id);
         if (index !== -1) {
             consultas.splice(index, 1);
             await salvarConsultasNoFirebase();
+            
+            // RASTREAMENTO: Cancelamento de consulta
+            if (consultaRemovida) {
+                trackEvent('cancelar_consulta', {
+                    'event_category': 'consulta',
+                    'event_label': consultaRemovida.specialty,
+                    'consulta_id': id
+                });
+            }
             return true;
         }
         return false;
@@ -784,6 +842,11 @@
         addMessage(mensagemExames);
         addMessage("Digite 0 para voltar ao menu.");
         step = 50;
+        
+        // RASTREAMENTO: Consultar exames
+        trackEvent('consultar_exames', {
+            'event_category': 'exames'
+        });
     }
     
     function gerarCupomUnico() {
@@ -810,6 +873,13 @@
         cupons.push(novoCupom);
         await salvarCupomNoFirebase(novoCupom);
         
+        // RASTREAMENTO: Gerar cupom
+        trackEvent('gerar_cupom', {
+            'event_category': 'promocao',
+            'event_label': cupomGerado,
+            'cupom_codigo': cupomGerado
+        });
+        
         const mensagemWhatsApp = `🏥 *PAD SAÚDE - CUPOM!* 🎉\n\n*${cupomGerado}*\n\n✅ *20% OFF* na primeira consulta!\n📅 *${new Date(dataAtual).toLocaleString('pt-BR')}*`;
         const whatsappLink = `https://wa.me/?text=${encodeURIComponent(mensagemWhatsApp)}`;
         
@@ -831,6 +901,12 @@
         addMessage(formatarListaCupons());
         addMessage("Digite 0 para voltar.");
         step = 50;
+        
+        // RASTREAMENTO: Visualizar cupons
+        trackEvent('ver_cupons', {
+            'event_category': 'promocao',
+            'quantidade_cupons': cupons.length
+        });
     }
     
     async function processAgendamento(input) {
@@ -903,14 +979,54 @@
             return true;
         }
         
-        if (input === "1") { step = 1; addMessage("📌 Especialidade:\n1️⃣ Clínico Geral\n2️⃣ Cardiologia\n3️⃣ Dermatologia\n4️⃣ Pediatria\n\nDigite o número:"); return true; }
-        if (input === "2") { addMessage("🔁 Cancelar consulta\n\nInforme o ID (ex: PAD-1234):"); step = 99; return true; }
-        if (input === "3") { addMessage("🔄 Remarcar consulta\n\nDigite: ID DD/MM/AAAA HH:MM\nEx: PAD-1001 28/12/2024 09:30"); step = 98; return true; }
-        if (input === "4") { addMessage(formatarListaConsultas()); step = 97; addMessage("Digite 0 para voltar."); return true; }
-        if (input === "5") { exibirGerarCupom(); return true; }
-        if (input === "6") { verCupons(); return true; }
-        if (input === "7") { consultarExames(); return true; }
-        if (input === "0") { addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Listar | 5-Cupom | 6-Meus cupons | 7-Exames"); return true; }
+        if (input === "1") { 
+            step = 1; 
+            addMessage("📌 Especialidade:\n1️⃣ Clínico Geral\n2️⃣ Cardiologia\n3️⃣ Dermatologia\n4️⃣ Pediatria\n\nDigite o número:");
+            // RASTREAMENTO: Iniciar agendamento
+            trackEvent('iniciar_agendamento', { 'event_category': 'consulta' });
+            return true; 
+        }
+        if (input === "2") { 
+            addMessage("🔁 Cancelar consulta\n\nInforme o ID (ex: PAD-1234):"); 
+            step = 99;
+            // RASTREAMENTO: Iniciar cancelamento
+            trackEvent('iniciar_cancelamento', { 'event_category': 'consulta' });
+            return true; 
+        }
+        if (input === "3") { 
+            addMessage("🔄 Remarcar consulta\n\nDigite: ID DD/MM/AAAA HH:MM\nEx: PAD-1001 28/12/2024 09:30"); 
+            step = 98;
+            // RASTREAMENTO: Iniciar remarcação
+            trackEvent('iniciar_remarcacao', { 'event_category': 'consulta' });
+            return true; 
+        }
+        if (input === "4") { 
+            addMessage(formatarListaConsultas()); 
+            step = 97; 
+            addMessage("Digite 0 para voltar.");
+            // RASTREAMENTO: Ver consultas
+            trackEvent('ver_consultas', { 
+                'event_category': 'consulta',
+                'quantidade_consultas': consultas.length 
+            });
+            return true; 
+        }
+        if (input === "5") { 
+            exibirGerarCupom(); 
+            return true; 
+        }
+        if (input === "6") { 
+            verCupons(); 
+            return true; 
+        }
+        if (input === "7") { 
+            consultarExames(); 
+            return true; 
+        }
+        if (input === "0") { 
+            addMessage("Menu: 1-Agendar | 2-Cancelar | 3-Remarcar | 4-Listar | 5-Cupom | 6-Meus cupons | 7-Exames"); 
+            return true; 
+        }
         addMessage("Opção inválida. Digite 1,2,3,4,5,6 ou 7.");
         return true;
     }
@@ -922,7 +1038,8 @@
                 await removerConsultaPorId(input);
                 addMessage(`✅ Consulta ${input} cancelada!`);
             } else addMessage(`❌ ID ${input} não encontrado.`);
-            step = 0; addMessage("Menu: 1,2,3,4,5,6,7");
+            step = 0; 
+            addMessage("Menu: 1,2,3,4,5,6,7");
             return true;
         }
         if (step === 98) {
@@ -938,13 +1055,26 @@
                         const novoId = await gerarIdUnico();
                         await adicionarConsulta(novoId, newDate, newTime, consultaExistente.specialty, consultaExistente.cidade, consultaExistente.enderecoCompleto, consultaExistente.linkMapa);
                         addMessage(`✅ Remarcada! Novo ID: ${novoId} - ${newDate} ${newTime}`);
+                        
+                        // RASTREAMENTO: Remarcação concluída
+                        trackEvent('remarcar_consulta', {
+                            'event_category': 'consulta',
+                            'antigo_id': oldId,
+                            'novo_id': novoId,
+                            'especialidade': consultaExistente.specialty
+                        });
                     } else addMessage(`❌ ID ${oldId} não encontrado.`);
                 } else addMessage("Formato inválido. Use DD/MM/AAAA HH:MM");
             } else addMessage("Formato: ID DD/MM/AAAA HH:MM");
-            step = 0; addMessage("Menu: 1,2,3,4,5,6,7");
+            step = 0; 
+            addMessage("Menu: 1,2,3,4,5,6,7");
             return true;
         }
-        if (step === 97 && input === "0") { step = 0; addMessage("Menu: 1,2,3,4,5,6,7"); return true; }
+        if (step === 97 && input === "0") { 
+            step = 0; 
+            addMessage("Menu: 1,2,3,4,5,6,7"); 
+            return true; 
+        }
         return false;
     }
     
@@ -964,6 +1094,13 @@
             const msg = inputField.value.trim();
             if (!msg) return;
             addMessage(msg, true);
+            
+            // RASTREAMENTO: Mensagem enviada no chat
+            trackEvent('chat_mensagem', {
+                'event_category': 'chat',
+                'mensagem': msg.substring(0, 50) // limitado para não enviar dados sensíveis
+            });
+            
             await processUserInput(msg);
             inputField.value = '';
             inputField.focus();
@@ -977,6 +1114,9 @@
             step = 0; selectedSpecialty = null; currentSlots = []; selectedSlot = null; selectedCidade = null; selectedCidadeInfo = null;
             chatContainer.innerHTML = '';
             addMessage("🏥 Conversa reiniciada!\n\n1️⃣ Agendar\n2️⃣ Cancelar\n3️⃣ Remarcar\n4️⃣ Ver consultas\n5️⃣ Gerar cupom\n6️⃣ Ver cupons\n7️⃣ Exames\n\nDigite a opção:");
+            
+            // RASTREAMENTO: Reset/Nova conversa
+            trackEvent('nova_conversa', { 'event_category': 'chat' });
         };
     }
     init();
