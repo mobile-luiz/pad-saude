@@ -375,7 +375,7 @@
     </div>
     
     <div class="footer">
-        <i class="fab fa-whatsapp"></i> Gere cupons de 20% OFF • Todos os cupons são salvos no Firebase com timestamp
+        <i class="fab fa-whatsapp"></i> Gere cupons de 20% OFF • Compartilhe com amigos para eles adquirirem o Cartão PAD Saúde
     </div>
 </div>
 
@@ -442,6 +442,7 @@
     };
     
     const LINK_EXAMES = "https://padsaude.com.br/";
+    const LINK_CARTAO_PAD = "https://cartaopadsaude.com.br";
     
     let consultas = [];
     let cupons = [];
@@ -461,6 +462,16 @@
         cpf: null,
         dataNascimento: null
     };
+    
+    // Variáveis para o fluxo de geração de cupom com dados pessoais
+    let cupomFlowStep = 0;
+    let cupomTempNome = null;
+    let cupomTempCPF = null;
+    let ultimoCupomGerado = null;
+    
+    // Variáveis para o fluxo de ver cupons por CPF
+    let verCuponsFlowStep = 0;
+    let verCuponsCPF = null;
     
     const chatContainer = document.getElementById('chatMessagesWA');
     
@@ -575,11 +586,9 @@
         }
     }
     
-    // FUNÇÃO PRINCIPAL: Salvar consulta com TODOS os dados do cliente
     async function salvarConsultaNoFirebase(consulta) {
         try {
             await consultasRef.child(consulta.id).set({
-                // Dados da consulta
                 id: consulta.id,
                 date: consulta.date,
                 time: consulta.time,
@@ -589,7 +598,6 @@
                 linkMapa: consulta.linkMapa,
                 createdAt: consulta.createdAt || new Date().toISOString(),
                 status: 'AGENDADO',
-                // Dados completos do cliente
                 paciente: {
                     nome: consulta.pacienteNome,
                     cpf: consulta.pacienteCPF,
@@ -597,10 +605,6 @@
                     cpfLimpo: consulta.pacienteCPF ? consulta.pacienteCPF.replace(/[^\d]/g, '') : null
                 }
             });
-            console.log('✅ Consulta salva no Firebase com dados do cliente:', consulta.id);
-            console.log('   - Nome:', consulta.pacienteNome);
-            console.log('   - CPF:', consulta.pacienteCPF);
-            console.log('   - Data Nasc:', consulta.pacienteDataNasc);
         } catch (error) {
             console.error('Erro ao salvar consulta:', error);
         }
@@ -623,7 +627,6 @@
                 }
             });
             await consultasRef.child(consulta.id).remove();
-            console.log('✅ Consulta removida do Firebase:', consulta.id);
         } catch (error) {
             console.error('Erro ao remover consulta:', error);
         }
@@ -637,7 +640,10 @@
                 dataGeracao: cupom.dataGeracao,
                 desconto: cupom.desconto,
                 utilizado: cupom.utilizado || false,
-                compartilhado: cupom.compartilhado || false
+                compartilhado: cupom.compartilhado || false,
+                nomeTitular: cupom.nomeTitular,
+                cpfTitular: cupom.cpfTitular,
+                cpfTitularLimpo: cupom.cpfTitular ? cupom.cpfTitular.replace(/[^\d]/g, '') : null
             });
             console.log('✅ Cupom salvo no Firebase:', cupom.codigo);
         } catch (error) {
@@ -655,7 +661,10 @@
                     dataGeracao: cup.dataGeracao,
                     desconto: cup.desconto,
                     utilizado: cup.utilizado || false,
-                    compartilhado: cup.compartilhado || false
+                    compartilhado: cup.compartilhado || false,
+                    nomeTitular: cup.nomeTitular,
+                    cpfTitular: cup.cpfTitular,
+                    cpfTitularLimpo: cup.cpfTitularLimpo
                 }));
                 console.log(`📥 Carregados ${cupons.length} cupons do Firebase`);
             }
@@ -726,6 +735,16 @@
         return consultas.filter(consulta => {
             const consultaCPF = consulta.pacienteCPF ? consulta.pacienteCPF.replace(/[^\d]/g, '') : '';
             return consultaCPF === cpfLimpo && !consulta.cancelado;
+        });
+    }
+    
+    // Função para buscar cupons por CPF do titular
+    function getCuponsPorCPF(cpf) {
+        if (!cpf) return [];
+        const cpfLimpo = cpf.replace(/[^\d]/g, '');
+        return cupons.filter(cupom => {
+            const cupomCPF = cupom.cpfTitularLimpo || (cupom.cpfTitular ? cupom.cpfTitular.replace(/[^\d]/g, '') : '');
+            return cupomCPF === cpfLimpo;
         });
     }
     
@@ -878,16 +897,25 @@
         return lista;
     }
     
-    function formatarListaCupons() {
-        if (cupons.length === 0) return "📭 Nenhum cupom gerado ainda. Digite 5 para gerar seu primeiro cupom!";
-        let lista = "🎫 <strong>SEUS CUPONS:</strong><br><br>";
-        cupons.forEach((cup, idx) => {
+    function formatarListaCuponsPorCPF(cpf, nomeTitular = null) {
+        const cuponsUsuario = getCuponsPorCPF(cpf);
+        
+        if (cuponsUsuario.length === 0) {
+            return `📭 Nenhum cupom encontrado para o CPF ${formatarCPF(cpf)}. Gere seu primeiro cupom digitando 5.`;
+        }
+        
+        let lista = `🎫 <strong>MEUS CUPONS</strong><br>`;
+        lista += `<div class="cpf-identificado"><i class="fas fa-id-card"></i> CPF: ${formatarCPF(cpf)} | ${nomeTitular || ''}</div><br>`;
+        
+        cuponsUsuario.forEach((cup, idx) => {
             const dataFormatada = cup.dataGeracao ? new Date(cup.dataGeracao).toLocaleString('pt-BR') : 'Data desconhecida';
             lista += `${idx+1}️⃣ <strong style="font-size:0.9rem; background:#f0f7f5; padding:4px 8px; border-radius:12px;">${cup.codigo}</strong><br>`;
             lista += `   📅 ${dataFormatada}<br>`;
             lista += `   💰 ${cup.desconto}<br>`;
+            if(cup.nomeTitular) lista += `   👤 Titular: ${cup.nomeTitular}<br>`;
             lista += `   ${cup.utilizado ? '❌ Usado' : '✅ Disponível'}<br><br>`;
         });
+        
         lista += "💡 Apresente o código no agendamento para 20% OFF!";
         return lista;
     }
@@ -920,53 +948,118 @@
         return `${prefixo}${numeros}${letras}`;
     }
     
-    async function exibirGerarCupom() {
-        const cupomGerado = gerarCupomUnico();
-        const dataAtual = new Date().toISOString();
-        
-        const novoCupom = {
-            codigo: cupomGerado,
-            dataGeracao: dataAtual,
-            desconto: "20% OFF na primeira consulta",
-            utilizado: false,
-            compartilhado: false
-        };
-        
-        cupons.push(novoCupom);
-        await salvarCupomNoFirebase(novoCupom);
-        
-        trackEvent('gerar_cupom', {
-            'event_category': 'promocao',
-            'event_label': cupomGerado,
-            'cupom_codigo': cupomGerado
-        });
-        
-        const mensagemWhatsApp = `🏥 *PAD SAÚDE - CUPOM!* 🎉\n\n*${cupomGerado}*\n\n✅ *20% OFF* na primeira consulta!\n📅 *${new Date(dataAtual).toLocaleString('pt-BR')}*`;
-        const whatsappLink = `https://wa.me/?text=${encodeURIComponent(mensagemWhatsApp)}`;
-        
-        const msgCupom = `
-            🎫 <strong>🎁 CUPOM GERADO!</strong><br><br>
-            🔖 <strong style="font-size:1.2rem; background:#f0f7f5; padding:8px 12px; border-radius:12px;">${cupomGerado}</strong><br><br>
-            <div>
-            ✨ ${novoCupom.desconto}<br>
-            📅 ${new Date(dataAtual).toLocaleString('pt-BR')}
-            </div>
-            👉 <a href="${whatsappLink}" target="_blank" style="background:#25D366; color:white; padding:8px 16px; border-radius:40px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; margin:8px 0; font-size:0.8rem;"><i class="fab fa-whatsapp"></i> Compartilhar</a>
-        `;
-        addMessage(msgCupom);
-        step = 5;
+    // Fluxo de geração de cupom solicitando NOME e CPF
+    function iniciarGeracaoCupom() {
+        cupomFlowStep = 1;
+        addMessage("🎁 <strong>Vamos gerar seu cupom de 20% OFF!</strong><br><br>Primeiro, informe seu <strong>NOME COMPLETO</strong>:");
     }
     
-    async function verCupons() {
-        await carregarCuponsDoFirebase();
-        addMessage(formatarListaCupons());
-        addMessage("Digite 0 para voltar.");
-        step = 50;
+    async function processGeracaoCupom(input) {
+        if (cupomFlowStep === 1) {
+            if (input.trim().length >= 3) {
+                cupomTempNome = input.trim();
+                cupomFlowStep = 2;
+                addMessage(`✅ Nome: ${cupomTempNome}<br><br>🆆 Agora informe seu <strong>CPF</strong> (apenas números):`);
+            } else {
+                addMessage("❌ Nome inválido. Informe seu nome completo (mínimo 3 caracteres):");
+            }
+            return;
+        }
         
-        trackEvent('ver_cupons', {
-            'event_category': 'promocao',
-            'quantidade_cupons': cupons.length
-        });
+        if (cupomFlowStep === 2) {
+            const cpfLimpo = input.replace(/[^\d]/g, '');
+            if (validarCPF(cpfLimpo)) {
+                cupomTempCPF = formatarCPF(cpfLimpo);
+                
+                const cupomGerado = gerarCupomUnico();
+                const dataAtual = new Date().toISOString();
+                
+                const novoCupom = {
+                    codigo: cupomGerado,
+                    dataGeracao: dataAtual,
+                    desconto: "20% OFF na primeira consulta",
+                    utilizado: false,
+                    compartilhado: false,
+                    nomeTitular: cupomTempNome,
+                    cpfTitular: cupomTempCPF,
+                    cpfTitularLimpo: cpfLimpo
+                };
+                
+                cupons.push(novoCupom);
+                await salvarCupomNoFirebase(novoCupom);
+                ultimoCupomGerado = novoCupom;
+                
+                trackEvent('gerar_cupom', {
+                    'event_category': 'promocao',
+                    'event_label': cupomGerado,
+                    'cupom_codigo': cupomGerado,
+                    'nome_titular': cupomTempNome
+                });
+                
+                const mensagemWhatsApp = `🏥 *PAD SAÚDE - CUPOM DE DESCONTO!* 🎉\n\n*${cupomGerado}*\n\n✅ *20% OFF* na primeira consulta!\n👤 *Indicado por:* ${cupomTempNome}\n🆔 *CPF do indicante:* ${cupomTempCPF}\n\n🎁 *Adquira já o Cartão PAD Saúde e tenha acesso a consultas com desconto!* 🔗\n👉 ${LINK_CARTAO_PAD}\n\n📅 Válido por tempo limitado! Compartilhe com quem precisa! 💙`;
+                const whatsappLink = `https://wa.me/?text=${encodeURIComponent(mensagemWhatsApp)}`;
+                
+                const msgCupom = `
+                    🎫 <strong>🎁 CUPOM GERADO COM SUCESSO!</strong><br><br>
+                    🔖 <strong style="font-size:1.2rem; background:#f0f7f5; padding:8px 12px; border-radius:12px;">${cupomGerado}</strong><br><br>
+                    👤 <strong>Titular:</strong> ${cupomTempNome}<br>
+                    🆔 <strong>CPF:</strong> ${cupomTempCPF}<br>
+                    ✨ ${novoCupom.desconto}<br>
+                    📅 ${new Date(dataAtual).toLocaleString('pt-BR')}<br><br>
+                    <div style="background:#e6f7f5; padding:10px; border-radius:16px; margin:10px 0;">
+                    💡 <strong>Compartilhe com um amigo!</strong><br>
+                    Ele pode usar este cupom para ganhar 20% OFF na primeira consulta e adquirir o Cartão PAD Saúde.
+                    </div>
+                    👉 <a href="${whatsappLink}" target="_blank" style="background:#25D366; color:white; padding:10px 20px; border-radius:40px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; margin:8px 0; font-size:0.85rem;"><i class="fab fa-whatsapp"></i> Compartilhar no WhatsApp</a>
+                    <br><br>
+                    <a href="${LINK_CARTAO_PAD}" target="_blank" style="background:#146b65; color:white; padding:8px 16px; border-radius:40px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-size:0.8rem;"><i class="fas fa-credit-card"></i> Adquirir Cartão PAD Saúde</a>
+                `;
+                addMessage(msgCupom);
+                
+                cupomFlowStep = 0;
+                cupomTempNome = null;
+                cupomTempCPF = null;
+                step = 5;
+            } else {
+                addMessage("❌ CPF inválido! Informe um CPF válido (apenas números):");
+            }
+            return;
+        }
+    }
+    
+    // NOVO FLUXO: Ver cupons por CPF
+    function iniciarVerCupons() {
+        verCuponsFlowStep = 1;
+        addMessage("🔍 <strong>Consultar meus cupons</strong><br><br>Para visualizar seus cupons, informe seu <strong>CPF</strong>:");
+    }
+    
+    async function processVerCupons(input) {
+        if (verCuponsFlowStep === 1) {
+            const cpfLimpo = input.replace(/[^\d]/g, '');
+            if (validarCPF(cpfLimpo)) {
+                verCuponsCPF = formatarCPF(cpfLimpo);
+                await carregarCuponsDoFirebase();
+                
+                const pacienteInfo = await buscarPacientePorCPF(cpfLimpo);
+                const nomeTitular = pacienteInfo ? pacienteInfo.nome : null;
+                
+                const listaCupons = formatarListaCuponsPorCPF(cpfLimpo, nomeTitular);
+                addMessage(listaCupons);
+                addMessage("Digite 0 para voltar ao menu.");
+                
+                trackEvent('ver_cupons', {
+                    'event_category': 'promocao',
+                    'quantidade_cupons': getCuponsPorCPF(cpfLimpo).length
+                });
+                
+                verCuponsFlowStep = 0;
+                verCuponsCPF = null;
+                step = 50;
+            } else {
+                addMessage("❌ CPF inválido! Informe um CPF válido (apenas números ou no formato 000.000.000-00):");
+            }
+            return;
+        }
     }
     
     // ==============================================================
@@ -1016,11 +1109,9 @@
         
         if (step === 42) {
             if (input === "1") {
-                // Cancelar
                 step = 43;
                 addMessage("Confirma o cancelamento? Digite <strong>SIM</strong> ou NÃO.");
             } else if (input === "2") {
-                // Remarcar
                 step = 44;
                 addMessage("📅 Buscando novos horários disponíveis...");
                 const consultasUsuario = getConsultasAtivasPorCPF(userCPF);
@@ -1482,11 +1573,11 @@
             return true; 
         }
         if (input === "5") { 
-            exibirGerarCupom(); 
+            iniciarGeracaoCupom(); 
             return true; 
         }
         if (input === "6") { 
-            verCupons(); 
+            iniciarVerCupons(); 
             return true; 
         }
         if (input === "7") { 
@@ -1502,6 +1593,18 @@
     }
     
     async function processUserInput(input) {
+        // Prioridade para fluxo de geração de cupom com CPF/Nome
+        if (cupomFlowStep > 0) {
+            await processGeracaoCupom(input);
+            return;
+        }
+        
+        // Prioridade para fluxo de ver cupons por CPF
+        if (verCuponsFlowStep > 0) {
+            await processVerCupons(input);
+            return;
+        }
+        
         if (step === 40 || step === 41 || step === 42 || step === 43 || step === 44 || step === 45 || step === 46) {
             await processConsultaPorCPF(input);
             return;
@@ -1552,6 +1655,11 @@
         
         document.getElementById('resetChatWA').onclick = async () => {
             step = 0; 
+            cupomFlowStep = 0;
+            verCuponsFlowStep = 0;
+            verCuponsCPF = null;
+            cupomTempNome = null;
+            cupomTempCPF = null;
             selectedSpecialty = null; 
             currentSlots = []; 
             selectedSlot = null; 
@@ -1567,7 +1675,7 @@
             remarcacaoConsultaOriginal = null;
             remarcacaoHorariosDisponiveis = [];
             chatContainer.innerHTML = '';
-            await carregarConsultasDoFirebase();
+            await Promise.all([carregarConsultasDoFirebase(), carregarCuponsDoFirebase()]);
             addMessage("🏥 Conversa reiniciada!\n\n1️⃣ Agendar\n2️⃣ Cancelar\n3️⃣ Remarcar\n4️⃣ Ver consultas\n5️⃣ Gerar cupom\n6️⃣ Ver cupons\n7️⃣ Exames\n\nDigite a opção:");
             
             trackEvent('nova_conversa', { 'event_category': 'chat' });
