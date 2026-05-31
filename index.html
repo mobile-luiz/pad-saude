@@ -292,173 +292,18 @@
             border-top: 1px solid rgba(27,94,87,0.15);
         }
         
-        /* Estilos específicos para mobile */
-        @media (max-width: 480px) {
-            body {
-                padding: 8px;
-            }
-            
-            .hero {
-                padding: 16px 12px;
-                border-radius: 18px;
-            }
-            
-            .card-header {
-                padding: 14px;
-            }
-            
-            .chat-messages {
-                height: 55vh;
-                min-height: 350px;
-            }
-            
-            .message-bubble {
-                max-width: 90%;
-                padding: 8px 12px;
-            }
-            
-            .input-area {
-                padding: 10px;
-            }
-            
-            .input-area input {
-                padding: 10px 14px;
-            }
-            
-            .btn-primary, .btn-secondary {
-                padding: 8px 16px;
-            }
-            
-            .reset-btn-container {
-                gap: 10px;
-                margin: 12px 12px 16px 12px;
-            }
-        }
-        
-        @media (max-width: 380px) {
-            .btn-primary, .btn-secondary {
-                padding: 8px 14px;
-                font-size: 0.75rem;
-            }
-            
-            .btn-primary i, .btn-secondary i {
-                font-size: 0.75rem;
-            }
-            
-            .reset-btn-container {
-                flex-direction: column;
-            }
-            
-            .btn-secondary {
-                justify-content: center;
-            }
-        }
-        
-        /* Ajustes para telas muito pequenas */
-        @media (max-width: 320px) {
-            .hero h1 {
-                font-size: 1.3rem;
-            }
-            
-            .badge-dual {
-                padding: 6px 12px;
-                gap: 8px;
-            }
-            
-            .chat-messages {
-                height: 50vh;
-                min-height: 300px;
-            }
-        }
-        
-        /* Landscape mode */
-        @media (max-height: 600px) and (orientation: landscape) {
-            .chat-messages {
-                height: 45vh;
-                min-height: 250px;
-            }
-            
-            .hero {
-                padding: 10px 12px;
-                margin-bottom: 10px;
-            }
-            
-            .hero h1 {
-                font-size: 1.2rem;
-            }
-            
-            .reset-btn-container {
-                margin: 8px 12px;
-            }
-        }
-        
-        .id-badge-chat { 
-            background: #eef3fa; 
-            padding: 3px 8px; 
-            border-radius: 20px; 
-            font-family: monospace; 
-            font-size: 0.7rem; 
-            font-weight: 700; 
-            color: #0e5954; 
-            display: inline-block; 
-        }
-        
-        .info-box { 
-            background: #e8f4f1; 
-            border-left: 4px solid #1b7e79; 
-            padding: 10px 12px; 
-            margin: 8px 0; 
-            border-radius: 10px; 
-            font-size: clamp(0.75rem, 3.5vw, 0.85rem); 
-        }
-        
-        .btn-mapa { 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 6px; 
-            background: #4285F4; 
-            color: white; 
-            padding: 6px 12px; 
-            border-radius: 25px; 
-            text-decoration: none; 
-            font-size: 0.7rem; 
+        /* Estilos para status */
+        .status-agendado {
+            color: #10b981;
             font-weight: 600;
-            margin-top: 8px;
-            transition: 0.2s;
         }
-        
-        .btn-mapa:active { 
-            background: #3367D6; 
-            transform: scale(0.98);
-        }
-        
-        .btn-exames {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 10px 18px;
-            border-radius: 40px;
-            text-decoration: none;
+        .status-realizado {
+            color: #3b82f6;
             font-weight: 600;
-            font-size: clamp(0.8rem, 3.5vw, 0.85rem);
-            margin: 10px 0;
-            transition: 0.2s;
-            box-shadow: 0 4px 12px rgba(102,126,234,0.3);
         }
-        
-        .btn-exames:active { 
-            transform: scale(0.98); 
-        }
-        
-        .exames-card {
-            background: linear-gradient(135deg, #f5f0ff 0%, #faf5ff 100%);
-            border-radius: 16px;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #d8c4ff;
-            text-align: center;
+        .status-cancelado {
+            color: #ef4444;
+            font-weight: 600;
         }
         
         /* Melhorias de scroll */
@@ -570,6 +415,7 @@
     const database = firebase.database();
     const consultasRef = database.ref('consultas');
     const cuponsRef = database.ref('cupons');
+    const cancelamentosRef = database.ref('cancelamentos');
     
     // Rastrear abertura da página
     trackPageView('PAD Saúde - Assistente WhatsApp');
@@ -615,6 +461,37 @@
     
     const chatContainer = document.getElementById('chatMessagesWA');
     
+    // ==============================================================
+    // FUNÇÃO PARA CALCULAR STATUS DA CONSULTA
+    // ==============================================================
+    function getStatusConsulta(dataStr, cancelado = false) {
+        if (cancelado) return { text: 'CANCELADO', class: 'status-cancelado', icon: 'fa-times-circle' };
+        
+        if (!dataStr) return { text: 'AGENDADO', class: 'status-agendado', icon: 'fa-calendar-check' };
+        
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        
+        const dataConsulta = parseDateBr(dataStr);
+        if (!dataConsulta) return { text: 'AGENDADO', class: 'status-agendado', icon: 'fa-calendar-check' };
+        dataConsulta.setHours(0, 0, 0, 0);
+        
+        if (dataConsulta < hoje) {
+            return { text: 'REALIZADO', class: 'status-realizado', icon: 'fa-check-double' };
+        } else {
+            return { text: 'AGENDADO', class: 'status-agendado', icon: 'fa-calendar-check' };
+        }
+    }
+    
+    function parseDateBr(dateStr) {
+        if (!dateStr) return null;
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        return null;
+    }
+    
     async function gerarIdUnico() {
         const snapshot = await consultasRef.once('value');
         const todasConsultas = snapshot.val();
@@ -631,24 +508,44 @@
         return `PAD-${novoNum}`;
     }
     
-    async function salvarConsultasNoFirebase() {
+    // Salvar consulta no Firebase
+    async function salvarConsultaNoFirebase(consulta) {
         try {
-            const consultasObj = {};
-            consultas.forEach(cons => {
-                consultasObj[cons.id] = {
-                    id: cons.id,
-                    date: cons.date,
-                    time: cons.time,
-                    specialty: cons.specialty,
-                    cidade: cons.cidade,
-                    enderecoCompleto: cons.enderecoCompleto,
-                    linkMapa: cons.linkMapa,
-                    createdAt: cons.createdAt || new Date().toISOString()
-                };
+            await consultasRef.child(consulta.id).set({
+                id: consulta.id,
+                date: consulta.date,
+                time: consulta.time,
+                specialty: consulta.specialty,
+                cidade: consulta.cidade,
+                enderecoCompleto: consulta.enderecoCompleto,
+                linkMapa: consulta.linkMapa,
+                createdAt: consulta.createdAt || new Date().toISOString()
             });
-            await consultasRef.set(consultasObj);
+            console.log('✅ Consulta salva no Firebase:', consulta.id);
         } catch (error) {
-            console.error('Erro ao salvar consultas:', error);
+            console.error('Erro ao salvar consulta:', error);
+        }
+    }
+    
+    // Remover consulta do Firebase e salvar nos cancelamentos
+    async function removerConsultaDoFirebase(consulta, motivo = "Cancelado pelo usuário") {
+        try {
+            // Salvar no nó de cancelamentos
+            await cancelamentosRef.child(consulta.id).set({
+                id: consulta.id,
+                date: consulta.date,
+                time: consulta.time,
+                specialty: consulta.specialty,
+                cidade: consulta.cidade,
+                canceladoEm: new Date().toISOString(),
+                motivo: motivo
+            });
+            
+            // Remover do nó de consultas
+            await consultasRef.child(consulta.id).remove();
+            console.log('✅ Consulta removida do Firebase e salva em cancelamentos:', consulta.id);
+        } catch (error) {
+            console.error('Erro ao remover consulta:', error);
         }
     }
     
@@ -689,26 +586,52 @@
     
     async function carregarConsultasDoFirebase() {
         try {
-            const snapshot = await consultasRef.once('value');
-            const data = snapshot.val();
-            if (data && Object.keys(data).length > 0) {
-                consultas = Object.values(data).map(cons => ({
-                    id: cons.id,
-                    date: cons.date,
-                    time: cons.time,
-                    specialty: cons.specialty,
-                    cidade: cons.cidade || "Caruaru-PE",
-                    enderecoCompleto: cons.enderecoCompleto || "",
-                    linkMapa: cons.linkMapa || "",
-                    createdAt: cons.createdAt
-                }));
-            } else {
-                consultas = [
-                    { id: "PAD-1001", date: "15/12/2024", time: "10:00", specialty: "Clínico Geral", cidade: "Caruaru-PE", enderecoCompleto: "R. Nossa Senhora de Fátima, 78 - Maurício de Nassau, Caruaru - PE, 55034-105", linkMapa: gerarLinkMapa("R. Nossa Senhora de Fátima, 78 - Maurício de Nassau, Caruaru - PE"), createdAt: new Date().toISOString() },
-                    { id: "PAD-1002", date: "18/12/2024", time: "14:30", specialty: "Cardiologia", cidade: "Recife-PE (Madalena)", enderecoCompleto: "R. Hermógenes de Morais, 317 - Madalena, Recife - PE, 50710-120", linkMapa: gerarLinkMapa("R. Hermógenes de Morais, 317 - Madalena, Recife - PE"), createdAt: new Date().toISOString() }
-                ];
-                await salvarConsultasNoFirebase();
+            // Carregar consultas ativas
+            const consultasSnapshot = await consultasRef.once('value');
+            const consultasData = consultasSnapshot.val();
+            
+            // Carregar consultas canceladas
+            const cancelamentosSnapshot = await cancelamentosRef.once('value');
+            const cancelamentosData = cancelamentosSnapshot.val();
+            
+            consultas = [];
+            
+            // Adicionar consultas ativas
+            if (consultasData && Object.keys(consultasData).length > 0) {
+                Object.values(consultasData).forEach(cons => {
+                    consultas.push({
+                        id: cons.id,
+                        date: cons.date,
+                        time: cons.time,
+                        specialty: cons.specialty,
+                        cidade: cons.cidade || "Caruaru-PE",
+                        enderecoCompleto: cons.enderecoCompleto || "",
+                        linkMapa: cons.linkMapa || "",
+                        createdAt: cons.createdAt,
+                        cancelado: false
+                    });
+                });
             }
+            
+            // Adicionar consultas canceladas
+            if (cancelamentosData && Object.keys(cancelamentosData).length > 0) {
+                Object.values(cancelamentosData).forEach(cancel => {
+                    consultas.push({
+                        id: cancel.id,
+                        date: cancel.date,
+                        time: cancel.time,
+                        specialty: cancel.specialty,
+                        cidade: cancel.cidade || "Caruaru-PE",
+                        enderecoCompleto: "",
+                        linkMapa: "",
+                        canceladoEm: cancel.canceladoEm,
+                        motivo: cancel.motivo,
+                        cancelado: true
+                    });
+                });
+            }
+            
+            console.log(`📥 Carregadas ${consultas.length} consultas do Firebase (${consultasData ? Object.keys(consultasData).length : 0} ativas, ${cancelamentosData ? Object.keys(cancelamentosData).length : 0} canceladas)`);
             return true;
         } catch (error) {
             console.error('Erro ao carregar consultas:', error);
@@ -721,10 +644,20 @@
     }
     
     async function adicionarConsulta(id, date, time, specialty, cidadeNome, enderecoCompleto, linkMapa) {
-        consultas.push({ id, date, time, specialty, cidade: cidadeNome, enderecoCompleto, linkMapa, createdAt: new Date().toISOString() });
-        await salvarConsultasNoFirebase();
+        const novaConsulta = { 
+            id, 
+            date, 
+            time, 
+            specialty, 
+            cidade: cidadeNome, 
+            enderecoCompleto, 
+            linkMapa, 
+            createdAt: new Date().toISOString(),
+            cancelado: false
+        };
+        consultas.push(novaConsulta);
+        await salvarConsultaNoFirebase(novaConsulta);
         
-        // RASTREAMENTO: Agendamento de consulta
         trackEvent('agendar_consulta', {
             'event_category': 'consulta',
             'event_label': specialty,
@@ -733,22 +666,23 @@
         });
     }
     
-    async function removerConsultaPorId(id) {
+    async function removerConsultaPorId(id, motivo = "Cancelado pelo usuário") {
         const consultaRemovida = buscarConsultaPorId(id);
-        const index = consultas.findIndex(c => c.id === id);
-        if (index !== -1) {
-            consultas.splice(index, 1);
-            await salvarConsultasNoFirebase();
-            
-            // RASTREAMENTO: Cancelamento de consulta
-            if (consultaRemovida) {
+        if (consultaRemovida && !consultaRemovida.cancelado) {
+            const index = consultas.findIndex(c => c.id === id);
+            if (index !== -1) {
+                // Remover da lista de consultas
+                consultas.splice(index, 1);
+                // Salvar como cancelada no Firebase
+                await removerConsultaDoFirebase(consultaRemovida, motivo);
+                
                 trackEvent('cancelar_consulta', {
                     'event_category': 'consulta',
                     'event_label': consultaRemovida.specialty,
                     'consulta_id': id
                 });
+                return true;
             }
-            return true;
         }
         return false;
     }
@@ -793,21 +727,52 @@
     }
     
     function formatarListaConsultas() {
-        if (consultas.length === 0) return "📭 Você não possui consultas agendadas.";
+        if (consultas.length === 0) return "📭 Você não possui consultas registradas.";
+        
         let lista = "📋 <strong>SUAS CONSULTAS:</strong><br><br>";
-        consultas.forEach((c, idx) => {
-            lista += `${idx+1}️⃣ <span class="id-badge-chat">ID: ${c.id}</span><br>`;
-            lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br>`;
-            lista += `   📍 ${c.cidade || "Cidade não informada"}<br>`;
-            if (c.enderecoCompleto) {
-                lista += `   🏥 ${c.enderecoCompleto.substring(0, 40)}${c.enderecoCompleto.length > 40 ? '...' : ''}<br>`;
-                if (c.linkMapa) {
+        
+        // Separar consultas por status
+        const agendadas = consultas.filter(c => !c.cancelado && getStatusConsulta(c.date, c.cancelado).text === 'AGENDADO');
+        const realizadas = consultas.filter(c => !c.cancelado && getStatusConsulta(c.date, c.cancelado).text === 'REALIZADO');
+        const canceladas = consultas.filter(c => c.cancelado);
+        
+        // Consultas Agendadas
+        if (agendadas.length > 0) {
+            lista += "🟢 <strong>AGENDADAS</strong><br>";
+            agendadas.forEach(c => {
+                lista += `   📌 <span class="id-badge-chat">ID: ${c.id}</span><br>`;
+                lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br>`;
+                lista += `   📍 ${c.cidade}<br>`;
+                if (c.enderecoCompleto && c.linkMapa) {
                     lista += `   <a href="${c.linkMapa}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; background:#e8f0fe; padding:3px 10px; border-radius:20px; font-size:0.65rem; color:#1a73e8; text-decoration:none; margin-top:5px;"><i class="fas fa-map-marker-alt"></i> Ver mapa</a><br>`;
                 }
-            }
-            lista += `<br>`;
-        });
-        lista += "💡 Guarde o ID para cancelar ou remarcar.";
+                lista += `<br>`;
+            });
+        }
+        
+        // Consultas Realizadas
+        if (realizadas.length > 0) {
+            lista += "🔵 <strong>REALIZADAS</strong><br>";
+            realizadas.forEach(c => {
+                lista += `   📌 <span class="id-badge-chat">ID: ${c.id}</span><br>`;
+                lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br>`;
+                lista += `   📍 ${c.cidade}<br><br>`;
+            });
+        }
+        
+        // Consultas Canceladas
+        if (canceladas.length > 0) {
+            lista += "🔴 <strong>CANCELADAS</strong><br>";
+            canceladas.forEach(c => {
+                lista += `   📌 <span class="id-badge-chat">ID: ${c.id}</span><br>`;
+                lista += `   📅 ${c.date} - ${c.time} • ${c.specialty}<br>`;
+                lista += `   📍 ${c.cidade}<br>`;
+                if (c.motivo) lista += `   📝 Motivo: ${c.motivo}<br>`;
+                lista += `<br>`;
+            });
+        }
+        
+        lista += "💡 Guarde o ID para cancelar ou remarcar consultas agendadas.";
         return lista;
     }
     
@@ -843,10 +808,7 @@
         addMessage("Digite 0 para voltar ao menu.");
         step = 50;
         
-        // RASTREAMENTO: Consultar exames
-        trackEvent('consultar_exames', {
-            'event_category': 'exames'
-        });
+        trackEvent('consultar_exames', { 'event_category': 'exames' });
     }
     
     function gerarCupomUnico() {
@@ -855,8 +817,6 @@
         const letras = Math.random().toString(36).substring(2, 6).toUpperCase();
         return `${prefixo}${numeros}${letras}`;
     }
-    
-    const LINK_CARTAO = "https://cartaopadsaude.com.br/";
     
     async function exibirGerarCupom() {
         const cupomGerado = gerarCupomUnico();
@@ -873,7 +833,6 @@
         cupons.push(novoCupom);
         await salvarCupomNoFirebase(novoCupom);
         
-        // RASTREAMENTO: Gerar cupom
         trackEvent('gerar_cupom', {
             'event_category': 'promocao',
             'event_label': cupomGerado,
@@ -902,7 +861,6 @@
         addMessage("Digite 0 para voltar.");
         step = 50;
         
-        // RASTREAMENTO: Visualizar cupons
         trackEvent('ver_cupons', {
             'event_category': 'promocao',
             'quantidade_cupons': cupons.length
@@ -982,21 +940,18 @@
         if (input === "1") { 
             step = 1; 
             addMessage("📌 Especialidade:\n1️⃣ Clínico Geral\n2️⃣ Cardiologia\n3️⃣ Dermatologia\n4️⃣ Pediatria\n\nDigite o número:");
-            // RASTREAMENTO: Iniciar agendamento
             trackEvent('iniciar_agendamento', { 'event_category': 'consulta' });
             return true; 
         }
         if (input === "2") { 
             addMessage("🔁 Cancelar consulta\n\nInforme o ID (ex: PAD-1234):"); 
             step = 99;
-            // RASTREAMENTO: Iniciar cancelamento
             trackEvent('iniciar_cancelamento', { 'event_category': 'consulta' });
             return true; 
         }
         if (input === "3") { 
             addMessage("🔄 Remarcar consulta\n\nDigite: ID DD/MM/AAAA HH:MM\nEx: PAD-1001 28/12/2024 09:30"); 
             step = 98;
-            // RASTREAMENTO: Iniciar remarcação
             trackEvent('iniciar_remarcacao', { 'event_category': 'consulta' });
             return true; 
         }
@@ -1004,7 +959,6 @@
             addMessage(formatarListaConsultas()); 
             step = 97; 
             addMessage("Digite 0 para voltar.");
-            // RASTREAMENTO: Ver consultas
             trackEvent('ver_consultas', { 
                 'event_category': 'consulta',
                 'quantidade_consultas': consultas.length 
@@ -1034,10 +988,20 @@
     async function processOtherSteps(input) {
         if (step === 99) {
             const consulta = buscarConsultaPorId(input);
-            if (consulta) { 
-                await removerConsultaPorId(input);
-                addMessage(`✅ Consulta ${input} cancelada!`);
-            } else addMessage(`❌ ID ${input} não encontrado.`);
+            if (consulta && !consulta.cancelado) { 
+                // Verificar se a consulta já foi realizada
+                const status = getStatusConsulta(consulta.date, false);
+                if (status.text === 'REALIZADO') {
+                    addMessage(`❌ A consulta ${input} já foi realizada e não pode ser cancelada.`);
+                } else {
+                    await removerConsultaPorId(input);
+                    addMessage(`✅ Consulta ${input} cancelada!`);
+                }
+            } else if (consulta && consulta.cancelado) {
+                addMessage(`❌ A consulta ${input} já está cancelada.`);
+            } else {
+                addMessage(`❌ ID ${input} não encontrado.`);
+            }
             step = 0; 
             addMessage("Menu: 1,2,3,4,5,6,7");
             return true;
@@ -1050,20 +1014,28 @@
                 const newTime = parts[2];
                 if (/^\d{2}\/\d{2}\/\d{4}$/.test(newDate) && /^([01]\d|2[0-3]):([0-5]\d)$/.test(newTime)) {
                     const consultaExistente = buscarConsultaPorId(oldId);
-                    if (consultaExistente) {
-                        await removerConsultaPorId(oldId);
-                        const novoId = await gerarIdUnico();
-                        await adicionarConsulta(novoId, newDate, newTime, consultaExistente.specialty, consultaExistente.cidade, consultaExistente.enderecoCompleto, consultaExistente.linkMapa);
-                        addMessage(`✅ Remarcada! Novo ID: ${novoId} - ${newDate} ${newTime}`);
-                        
-                        // RASTREAMENTO: Remarcação concluída
-                        trackEvent('remarcar_consulta', {
-                            'event_category': 'consulta',
-                            'antigo_id': oldId,
-                            'novo_id': novoId,
-                            'especialidade': consultaExistente.specialty
-                        });
-                    } else addMessage(`❌ ID ${oldId} não encontrado.`);
+                    if (consultaExistente && !consultaExistente.cancelado) {
+                        const status = getStatusConsulta(consultaExistente.date, false);
+                        if (status.text === 'REALIZADO') {
+                            addMessage(`❌ A consulta ${oldId} já foi realizada e não pode ser remarcada.`);
+                        } else {
+                            await removerConsultaPorId(oldId);
+                            const novoId = await gerarIdUnico();
+                            await adicionarConsulta(novoId, newDate, newTime, consultaExistente.specialty, consultaExistente.cidade, consultaExistente.enderecoCompleto, consultaExistente.linkMapa);
+                            addMessage(`✅ Remarcada! Novo ID: ${novoId} - ${newDate} ${newTime}`);
+                            
+                            trackEvent('remarcar_consulta', {
+                                'event_category': 'consulta',
+                                'antigo_id': oldId,
+                                'novo_id': novoId,
+                                'especialidade': consultaExistente.specialty
+                            });
+                        }
+                    } else if (consultaExistente && consultaExistente.cancelado) {
+                        addMessage(`❌ A consulta ${oldId} está cancelada e não pode ser remarcada.`);
+                    } else {
+                        addMessage(`❌ ID ${oldId} não encontrado.`);
+                    }
                 } else addMessage("Formato inválido. Use DD/MM/AAAA HH:MM");
             } else addMessage("Formato: ID DD/MM/AAAA HH:MM");
             step = 0; 
@@ -1095,10 +1067,9 @@
             if (!msg) return;
             addMessage(msg, true);
             
-            // RASTREAMENTO: Mensagem enviada no chat
             trackEvent('chat_mensagem', {
                 'event_category': 'chat',
-                'mensagem': msg.substring(0, 50) // limitado para não enviar dados sensíveis
+                'mensagem': msg.substring(0, 50)
             });
             
             await processUserInput(msg);
@@ -1113,9 +1084,9 @@
         document.getElementById('resetChatWA').onclick = async () => {
             step = 0; selectedSpecialty = null; currentSlots = []; selectedSlot = null; selectedCidade = null; selectedCidadeInfo = null;
             chatContainer.innerHTML = '';
+            await carregarConsultasDoFirebase();
             addMessage("🏥 Conversa reiniciada!\n\n1️⃣ Agendar\n2️⃣ Cancelar\n3️⃣ Remarcar\n4️⃣ Ver consultas\n5️⃣ Gerar cupom\n6️⃣ Ver cupons\n7️⃣ Exames\n\nDigite a opção:");
             
-            // RASTREAMENTO: Reset/Nova conversa
             trackEvent('nova_conversa', { 'event_category': 'chat' });
         };
     }
